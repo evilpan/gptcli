@@ -1,10 +1,8 @@
 # Prepare
 
 1. clone this repo
-2. pip3 install -U requirements.txt
+2. pip3 install -U -r requirements.txt
 3. get your apikey from <https://platform.openai.com/account/api-keys> and put it in `.key`
-
-> NOTE: `readline` only works on Linux/macOS
 
 # Run
 

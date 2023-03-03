@@ -1,2 +1,3 @@
 openai
 rich
+pyreadline; platform_system == 'Windows'
