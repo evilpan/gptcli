@@ -2,7 +2,6 @@
 
 import os
 import argparse
-import readline
 import openai
 
 from rich.prompt import Prompt
@@ -27,12 +26,30 @@ def openai_create(prompt, history: dict):
     return response["choices"][0]["message"]["content"]
 
 
+def setup_readline():
+    def completer(text, state):
+        options = ['exit', 'quit', 'reset']
+        matches = [o for o in options if o.startswith(text)]
+        if state < len(matches):
+            return matches[state]
+        else:
+            return None
+    readline.set_completer(completer)
+    readline.parse_and_bind('tab:complete')
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-k", dest="key", help="path to api_key", default=os.path.join(baseDir, ".key"))
     parser.add_argument("-p", dest="proxy", help="http/https proxy to use")
     args = parser.parse_args()
+
+    try:
+        import readline
+        setup_readline()
+    except Exception:
+        pass
 
     c.print(f"Loading key from {args.key}")
     with open(args.key, "r") as f:
@@ -47,8 +64,13 @@ if __name__ == '__main__':
         try:
             question = c.input("[bold yellow]Input:[/] ").strip()
             if not question:
+                c.print()
                 continue
-            if question in ["q", "exit", "quit"]:
+            if question in ["reset"]:
+                history.clear()
+                c.print("Session reset.")
+                continue
+            if question in ["exit", "quit"]:
                 break
             answer = openai_create(question, history)
         except openai.error.RateLimitError as e:
