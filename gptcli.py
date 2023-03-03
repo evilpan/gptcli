@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import argparse
 import readline
 import openai
@@ -9,10 +10,11 @@ from rich.console import Console
 from rich.markdown import Markdown
 
 c = Console()
+baseDir = os.path.dirname(os.path.realpath(__file__))
 
 def openai_create(prompt, history: dict):
     messages = [
-        { "role": "system", "content": "If there're any code in your response, show it in markdown with syntax highlighting" },
+        { "role": "system", "content": "Use triple backticks with the language name for every code block in your markdown response, if any." },
     ]
     messages.extend([ 
         {"role": "user", "content": hist} for hist in 
@@ -28,7 +30,7 @@ def openai_create(prompt, history: dict):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-k", dest="key", help="path to api_key", default=".key")
+    parser.add_argument("-k", dest="key", help="path to api_key", default=os.path.join(baseDir, ".key"))
     parser.add_argument("-p", dest="proxy", help="http/https proxy to use")
     args = parser.parse_args()
 
@@ -39,10 +41,11 @@ if __name__ == '__main__':
         c.print(f"Using proxy: {args.proxy}")
         openai.proxy = args.proxy
 
+    sep = Markdown("---")
     history = []
     while True:
         try:
-            question = c.input("[bold green]Input:[/] ").strip()
+            question = c.input("[bold yellow]Input:[/] ").strip()
             if not question:
                 continue
             if question in ["q", "exit", "quit"]:
@@ -55,7 +58,5 @@ if __name__ == '__main__':
             c.print("Bye!")
             break
         # print(answer)
-        md = Markdown(answer)
-        c.print(md)
-        c.print()
+        c.print(Markdown(answer), sep)
         history.append(question)
