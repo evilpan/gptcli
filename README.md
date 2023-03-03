@@ -1,4 +1,4 @@
-# Prepare
+# Setup
 
 1. clone this repo
 2. pip3 install -U -r requirements.txt
@@ -30,3 +30,4 @@ options:
 # LINK
 
 - https://platform.openai.com/docs/introduction
+- https://platform.openai.com/docs/api-reference/completions
