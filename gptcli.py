@@ -51,6 +51,9 @@ if __name__ == '__main__':
             if question in ["q", "exit", "quit"]:
                 break
             answer = openai_create(question, history)
+        except openai.error.RateLimitError as e:
+            c.print(e)
+            continue
         except KeyboardInterrupt:
             c.print("Bye!")
             break
