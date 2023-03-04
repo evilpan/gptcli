@@ -42,7 +42,7 @@ options:
 - [x] Stream output
 
 
-> NOTE: openai's library use aiohttp for stream mode request, and `aiohttp` only supports http/https proxy, but not socks5.
+> NOTE: openai's library use aiohttp for stream mode request, and `aiohttp` only supports http/https proxy, not socks5.
 > see: https://github.com/aio-libs/aiohttp/pull/2539
 
 # Example
@@ -58,4 +58,4 @@ Stream mode:
 - https://platform.openai.com/docs/introduction
 - https://platform.openai.com/docs/api-reference/completions
 
-[vid]: https://asciinema.org/a/564580
+[vid]: https://asciinema.org/a/564585
