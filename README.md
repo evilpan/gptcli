@@ -1,6 +1,6 @@
-[![stream](./stream.svg)][vid]
-
 Take chatGPT into command line.
+
+[![stream](./stream.svg)][vid]
 
 # Setup
 

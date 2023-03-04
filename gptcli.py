@@ -130,7 +130,10 @@ if __name__ == '__main__':
     data = []
     while True:
         try:
-            content = c.input("[bold yellow]Input:[/] ").strip()
+            # content = c.input("[bold yellow]Input:[/] ").strip()
+            with c.capture() as capture:
+                c.print("[bold yellow]Input:[/] ", end="")
+            content = input(capture.get())
             if not content:
                 c.print()
                 continue
