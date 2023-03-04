@@ -1,3 +1,7 @@
+[![stream](./stream.svg)][vid]
+
+Take chatGPT into command line.
+
 # Setup
 
 1. clone this repo
@@ -32,6 +36,10 @@ options:
   exit     exit console
 ```
 
+# Example
+
+![demo](./demo.jpg)
+
 # Feature
 
 - [x] Session based
@@ -45,17 +53,11 @@ options:
 > NOTE: openai's library use aiohttp for stream mode request, and `aiohttp` only supports http/https proxy, not socks5.
 > see: https://github.com/aio-libs/aiohttp/pull/2539
 
-# Example
-
-![demo](./demo.jpg)
-
-Stream mode:
-
-[![stream](./stream.svg)][vid]
 
 # LINK
 
 - https://platform.openai.com/docs/introduction
 - https://platform.openai.com/docs/api-reference/completions
+- https://platform.openai.com/account/api-keys
 
 [vid]: https://asciinema.org/a/564585
