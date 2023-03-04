@@ -23,6 +23,7 @@ def openai_create(data: dict):
 
 def print_help():
     c.print("""options:
+  <        input multiline
   reset    reset session, i.e. clear chat history
   help     show this help message
   exit     exit console
@@ -30,7 +31,7 @@ def print_help():
 
 def setup_readline():
     def completer(text, state):
-        options = ['reset', 'help', 'exit']
+        options = ['reset', 'help', 'exit', '<<<']
         matches = [o for o in options if o.startswith(text)]
         if state < len(matches):
             return matches[state]
@@ -39,6 +40,20 @@ def setup_readline():
     readline.set_completer(completer)
     readline.parse_and_bind('tab:complete')
 
+def read_multiline() -> str:
+    contents = []
+    c.print("Input multiline data, stop with ctrl-c/ctrl-d(Linux/macOS) or ctrl-z(Windows):")
+    while True:
+        try:
+            line = input()
+        except EOFError:
+            c.print("--- EOF ---")
+            break
+        except KeyboardInterrupt:
+            c.print("--- EOF ---")
+            break
+        contents.append(line)
+    return "\n".join(contents)
 
 if __name__ == '__main__':
 
@@ -71,6 +86,8 @@ if __name__ == '__main__':
             if not content:
                 c.print()
                 continue
+            if content == "<":
+                content = read_multiline()
             if content == "reset":
                 data.clear()
                 c.print("Session reset.")

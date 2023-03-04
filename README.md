@@ -17,19 +17,32 @@ options:
   -p PROXY    http/https proxy to use (default: None)
 ```
 
+Console help:
+
+```
+$ gptcli.py 
+Loading key from .key
+Attach response in prompt: False
+Input: help
+options:
+  <        input multiline
+  reset    reset session, i.e. clear chat history
+  help     show this help message
+  exit     exit console
+```
+
 # Feature
 
 - [x] Session based
 - [x] Markdown support
 - [x] Syntax highlight
 - [x] Proxy support
-- [ ] Multiline input
+- [x] Multiline input
 - [ ] Stream output
 
 # Example
 
 ![demo](./demo.jpg)
-
 
 # LINK
 
