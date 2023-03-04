@@ -21,14 +21,17 @@ class Config:
 def query_openai(data: dict):
     messages = [ systemPrompt ]
     messages.extend(data)
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=messages
-    )
-    content = response["choices"][0]["message"]["content"]
-    c.print(Markdown(content), sep)
-    return content
-
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages
+        )
+        content = response["choices"][0]["message"]["content"]
+        c.print(Markdown(content), sep)
+        return content
+    except openai.error.RateLimitError as e:
+        c.print(e)
+        return ""
 
 async def query_openai_stream(data: dict):
     messages = [ systemPrompt ]
@@ -43,24 +46,30 @@ async def query_openai_stream(data: dict):
         except ImportError:
             c.print("aiohttp_socks not installed, socks proxy for aiohttp won't work")
             Config.aio_socks_proxy = None
-    with Live(md, auto_refresh=False) as lv:
-        async for part in await openai.ChatCompletion.acreate(
-            model="gpt-3.5-turbo",
-            messages=messages,
-            stream=True
-        ):
-            finish_reason = part["choices"][0]["finish_reason"]
-            if "content" in part["choices"][0]["delta"]:
-                content = part["choices"][0]["delta"]["content"]
-                md.markup += content
-                md.parsed = parser.parse(md.markup)
-                lv.refresh()
-            elif finish_reason:
-                pass
+    answer = ""
+    try:
+        with Live(md, auto_refresh=False) as lv:
+            async for part in await openai.ChatCompletion.acreate(
+                model="gpt-3.5-turbo",
+                messages=messages,
+                stream=True
+            ):
+                finish_reason = part["choices"][0]["finish_reason"]
+                if "content" in part["choices"][0]["delta"]:
+                    content = part["choices"][0]["delta"]["content"]
+                    answer += content
+                    md.markup = answer
+                    md.parsed = parser.parse(md.markup)
+                    lv.refresh()
+                elif finish_reason:
+                    pass
+    except openai.error.RateLimitError as e:
+        c.print(e)
+        answer = ""
     c.print(sep)
     if Config.aio_socks_proxy:
         await openai.aiosession.get().close()
-    return md.markup
+    return answer
 
 
 def print_help():
@@ -153,9 +162,6 @@ if __name__ == '__main__':
                 answer = asyncio.run(query_openai_stream(data))
             else:
                 answer = query_openai(data)
-        except openai.error.RateLimitError as e:
-            c.print(e)
-            continue
         except KeyboardInterrupt:
             c.print("Bye!")
             break
