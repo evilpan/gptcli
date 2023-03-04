@@ -52,6 +52,7 @@ options:
 
 > NOTE: openai's library use aiohttp for stream mode request, and `aiohttp` only supports http/https proxy, not socks5.
 > see: https://github.com/aio-libs/aiohttp/pull/2539
+> The workaround is to use `aiohttp_socks` module for socks proxy in stream mode
 
 
 # LINK

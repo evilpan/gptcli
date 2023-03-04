@@ -8,11 +8,15 @@ import openai
 from rich.console import Console
 from rich.markdown import Markdown, MarkdownIt
 from rich.live import Live
+from aiohttp import ClientSession
 
 c = Console()
 sep = Markdown("---")
 baseDir = os.path.dirname(os.path.realpath(__file__))
 systemPrompt = { "role": "system", "content": "Use triple backticks with the language name for every code block in your markdown response, if any." }
+
+class Config:
+    aio_socks_proxy = None
 
 def query_openai(data: dict):
     messages = [ systemPrompt ]
@@ -31,6 +35,14 @@ async def query_openai_stream(data: dict):
     messages.extend(data)
     md = Markdown("")
     parser = MarkdownIt().enable("strikethrough")
+    if Config.aio_socks_proxy:
+        try:
+            from aiohttp_socks import ProxyConnector
+            connector = ProxyConnector.from_url(Config.aio_socks_proxy)
+            openai.aiosession.set(ClientSession(connector=connector))
+        except ImportError:
+            c.print("aiohttp_socks not installed, socks proxy for aiohttp won't work")
+            Config.aio_socks_proxy = None
     with Live(md, refresh_per_second=4):  # update 4 times a second to feel fluid
         async for part in await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
@@ -45,6 +57,8 @@ async def query_openai_stream(data: dict):
             elif finish_reason:
                 pass
     c.print(sep)
+    if Config.aio_socks_proxy:
+        await openai.aiosession.get().close()
     return md.markup
 
 
@@ -104,7 +118,10 @@ if __name__ == '__main__':
         openai.api_key = f.read().strip()
     if args.proxy:
         c.print(f"Using proxy: {args.proxy}")
-        openai.proxy = args.proxy
+        if args.stream and args.proxy.startswith("socks"):
+            Config.aio_socks_proxy = args.proxy
+        else:
+            openai.proxy = args.proxy
     c.print(f"Attach response in prompt: {args.response}")
     c.print(f"Stream mode: {args.stream}")
 
