@@ -38,6 +38,14 @@ options:
   exit     exit console
 ```
 
+# Run in Docker
+
+```sh
+docker build -t gptcli:latest .
+# Change path_to_key_on_the_host to the path where your .key file is stored on the host.
+docker run -it --rm -v ~/Downloads/gptcli.key:/gptcli/.key gptcli:latest
+```
+
 # Example
 
 ![demo](./demo.jpg)
