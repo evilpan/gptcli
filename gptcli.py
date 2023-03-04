@@ -67,21 +67,21 @@ if __name__ == '__main__':
     data = []
     while True:
         try:
-            question = c.input("[bold yellow]Input:[/] ").strip()
-            if not question:
+            content = c.input("[bold yellow]Input:[/] ").strip()
+            if not content:
                 c.print()
                 continue
-            if question == "reset":
+            if content == "reset":
                 data.clear()
                 c.print("Session reset.")
                 continue
-            if question == "help":
+            if content == "help":
                 print_help()
                 continue
-            if question == "exit":
+            if content == "exit":
                 break
-            data.append({"role": "user", "content": question})
-            answer = openai_create(question, data)
+            data.append({"role": "user", "content": content})
+            answer = openai_create(data)
         except openai.error.RateLimitError as e:
             c.print(e)
             continue

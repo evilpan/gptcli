@@ -23,6 +23,8 @@ options:
 - [x] Markdown support
 - [x] Syntax highlight
 - [x] Proxy support
+- [ ] Multiline input
+- [ ] Stream output
 
 # Example
 
