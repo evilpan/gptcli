@@ -100,7 +100,7 @@ def read_multiline() -> str:
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-s", dest="stream", action="store_true", help="query openai in stream mode")
+    parser.add_argument("-n", dest="no_stream", action="store_true", help="query openai in non-stream mode")
     parser.add_argument("-r", dest="response", action="store_true",
                         help="attach server response in request prompt, consume more tokens to get better results")
     parser.add_argument("-k", dest="key", help="path to api_key", default=os.path.join(baseDir, ".key"))
@@ -116,14 +116,15 @@ if __name__ == '__main__':
     c.print(f"Loading key from {args.key}")
     with open(args.key, "r") as f:
         openai.api_key = f.read().strip()
+    stream = not args.no_stream
     if args.proxy:
         c.print(f"Using proxy: {args.proxy}")
-        if args.stream and args.proxy.startswith("socks"):
+        if stream and args.proxy.startswith("socks"):
             Config.aio_socks_proxy = args.proxy
         else:
             openai.proxy = args.proxy
     c.print(f"Attach response in prompt: {args.response}")
-    c.print(f"Stream mode: {args.stream}")
+    c.print(f"Stream mode: {stream}")
 
     data = []
     while True:
@@ -144,7 +145,7 @@ if __name__ == '__main__':
             if content == "exit":
                 break
             data.append({"role": "user", "content": content})
-            if args.stream:
+            if stream:
                 answer = asyncio.run(query_openai_stream(data))
             else:
                 answer = query_openai(data)
