@@ -1,25 +1,52 @@
 #!/usr/bin/env python3
 
 import os
+import asyncio
 import argparse
 import openai
 
 from rich.console import Console
-from rich.markdown import Markdown
+from rich.markdown import Markdown, MarkdownIt
+from rich.live import Live
 
 c = Console()
+sep = Markdown("---")
 baseDir = os.path.dirname(os.path.realpath(__file__))
+systemPrompt = { "role": "system", "content": "Use triple backticks with the language name for every code block in your markdown response, if any." }
 
-def openai_create(data: dict):
-    messages = [
-        { "role": "system", "content": "Use triple backticks with the language name for every code block in your markdown response, if any." },
-    ]
+def query_openai(data: dict):
+    messages = [ systemPrompt ]
     messages.extend(data)
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages
     )
-    return response["choices"][0]["message"]["content"]
+    content = response["choices"][0]["message"]["content"]
+    c.print(Markdown(content), sep)
+    return content
+
+
+async def query_openai_stream(data: dict):
+    messages = [ systemPrompt ]
+    messages.extend(data)
+    md = Markdown("")
+    parser = MarkdownIt().enable("strikethrough")
+    with Live(md, refresh_per_second=4):  # update 4 times a second to feel fluid
+        async for part in await openai.ChatCompletion.acreate(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            stream=True
+        ):
+            finish_reason = part["choices"][0]["finish_reason"]
+            if "content" in part["choices"][0]["delta"]:
+                content = part["choices"][0]["delta"]["content"]
+                md.markup += content
+                md.parsed = parser.parse(md.markup)
+            elif finish_reason:
+                pass
+    c.print(sep)
+    return md.markup
+
 
 def print_help():
     c.print("""options:
@@ -55,9 +82,11 @@ def read_multiline() -> str:
         contents.append(line)
     return "\n".join(contents)
 
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("-s", dest="stream", action="store_true", help="query openai in stream mode")
     parser.add_argument("-r", dest="response", action="store_true",
                         help="attach server response in request prompt, consume more tokens to get better results")
     parser.add_argument("-k", dest="key", help="path to api_key", default=os.path.join(baseDir, ".key"))
@@ -77,8 +106,8 @@ if __name__ == '__main__':
         c.print(f"Using proxy: {args.proxy}")
         openai.proxy = args.proxy
     c.print(f"Attach response in prompt: {args.response}")
+    c.print(f"Stream mode: {args.stream}")
 
-    sep = Markdown("---")
     data = []
     while True:
         try:
@@ -98,7 +127,10 @@ if __name__ == '__main__':
             if content == "exit":
                 break
             data.append({"role": "user", "content": content})
-            answer = openai_create(data)
+            if args.stream:
+                answer = asyncio.run(query_openai_stream(data))
+            else:
+                answer = query_openai(data)
         except openai.error.RateLimitError as e:
             c.print(e)
             continue
@@ -108,7 +140,5 @@ if __name__ == '__main__':
         except EOFError as e:
             c.print("Bye!")
             break
-        # print(answer)
-        c.print(Markdown(answer), sep)
         if args.response:
             data.append({"role": "assistant", "content": answer})
