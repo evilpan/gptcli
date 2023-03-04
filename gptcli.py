@@ -4,31 +4,33 @@ import os
 import argparse
 import openai
 
-from rich.prompt import Prompt
 from rich.console import Console
 from rich.markdown import Markdown
 
 c = Console()
 baseDir = os.path.dirname(os.path.realpath(__file__))
 
-def openai_create(prompt, history: dict):
+def openai_create(data: dict):
     messages = [
         { "role": "system", "content": "Use triple backticks with the language name for every code block in your markdown response, if any." },
     ]
-    messages.extend([ 
-        {"role": "user", "content": hist} for hist in 
-        history + [prompt]
-    ])
+    messages.extend(data)
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages
     )
     return response["choices"][0]["message"]["content"]
 
+def print_help():
+    c.print("""options:
+  reset    reset session, i.e. clear chat history
+  help     show this help message
+  exit     exit console
+""")
 
 def setup_readline():
     def completer(text, state):
-        options = ['exit', 'quit', 'reset']
+        options = ['reset', 'help', 'exit']
         matches = [o for o in options if o.startswith(text)]
         if state < len(matches):
             return matches[state]
@@ -41,6 +43,8 @@ def setup_readline():
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("-r", dest="response", action="store_true",
+                        help="attach server response in request prompt, consume more tokens to get better results")
     parser.add_argument("-k", dest="key", help="path to api_key", default=os.path.join(baseDir, ".key"))
     parser.add_argument("-p", dest="proxy", help="http/https proxy to use")
     args = parser.parse_args()
@@ -57,22 +61,27 @@ if __name__ == '__main__':
     if args.proxy:
         c.print(f"Using proxy: {args.proxy}")
         openai.proxy = args.proxy
+    c.print(f"Attach response in prompt: {args.response}")
 
     sep = Markdown("---")
-    history = []
+    data = []
     while True:
         try:
             question = c.input("[bold yellow]Input:[/] ").strip()
             if not question:
                 c.print()
                 continue
-            if question in ["reset"]:
-                history.clear()
+            if question == "reset":
+                data.clear()
                 c.print("Session reset.")
                 continue
-            if question in ["exit", "quit"]:
+            if question == "help":
+                print_help()
+                continue
+            if question == "exit":
                 break
-            answer = openai_create(question, history)
+            data.append({"role": "user", "content": question})
+            answer = openai_create(question, data)
         except openai.error.RateLimitError as e:
             c.print(e)
             continue
@@ -84,4 +93,5 @@ if __name__ == '__main__':
             break
         # print(answer)
         c.print(Markdown(answer), sep)
-        history.append(question)
+        if args.response:
+            data.append({"role": "assistant", "content": answer})
