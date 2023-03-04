@@ -43,7 +43,7 @@ async def query_openai_stream(data: dict):
         except ImportError:
             c.print("aiohttp_socks not installed, socks proxy for aiohttp won't work")
             Config.aio_socks_proxy = None
-    with Live(md, refresh_per_second=4):  # update 4 times a second to feel fluid
+    with Live(md, auto_refresh=False) as lv:
         async for part in await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
             messages=messages,
@@ -54,6 +54,7 @@ async def query_openai_stream(data: dict):
                 content = part["choices"][0]["delta"]["content"]
                 md.markup += content
                 md.parsed = parser.parse(md.markup)
+                lv.refresh()
             elif finish_reason:
                 pass
     c.print(sep)
