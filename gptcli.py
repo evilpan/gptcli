@@ -65,7 +65,7 @@ async def query_openai_stream(data: dict):
 
 def print_help():
     c.print("""options:
-  <        input multiline
+  <        input multiline, end with ctrl-d(Linux/macOS) or ctrl-z(Windows)
   reset    reset session, i.e. clear chat history
   help     show this help message
   exit     exit console
@@ -84,7 +84,7 @@ def setup_readline():
 
 def read_multiline() -> str:
     contents = []
-    c.print("Input multiline data, stop with ctrl-c/ctrl-d(Linux/macOS) or ctrl-z(Windows):")
+    c.print("Input multiline data, cancel with ctrl-c:")
     while True:
         try:
             line = input()
@@ -92,8 +92,7 @@ def read_multiline() -> str:
             c.print("--- EOF ---")
             break
         except KeyboardInterrupt:
-            c.print("--- EOF ---")
-            break
+            return ""
         contents.append(line)
     return "\n".join(contents)
 
@@ -134,11 +133,11 @@ if __name__ == '__main__':
             with c.capture() as capture:
                 c.print("[bold yellow]Input:[/] ", end="")
             content = input(capture.get())
-            if not content:
-                c.print()
-                continue
             if content == "<":
                 content = read_multiline()
+            content = content.strip()
+            if not content:
+                continue
             if content == "reset":
                 data.clear()
                 c.print("Session reset.")
