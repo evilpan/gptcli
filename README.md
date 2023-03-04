@@ -25,12 +25,14 @@ options:
 Console help:
 
 ```
-$ gptcli.py 
+$ gptcli.py -rp socks5://localhost:1080
 Loading key from .key
-Attach response in prompt: False
+Using proxy: socks5://localhost:1080
+Attach response in prompt: True
+Stream mode: True
 Input: help
 options:
-  <        input multiline
+  <        input multiline, end with ctrl-d(Linux/macOS) or ctrl-z(Windows)
   reset    reset session, i.e. clear chat history
   help     show this help message
   exit     exit console
