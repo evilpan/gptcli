@@ -92,7 +92,7 @@ def print_help():
 
 def setup_readline():
     def completer(text, state):
-        options = ['reset', 'help', 'exit', '<<<']
+        options = ['reset', 'help', 'exit', '<']
         matches = [o for o in options if o.startswith(text)]
         if state < len(matches):
             return matches[state]
