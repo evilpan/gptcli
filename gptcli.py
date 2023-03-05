@@ -171,5 +171,7 @@ if __name__ == '__main__':
         except EOFError as e:
             c.print("Bye!")
             break
-        if args.response:
+        if not answer:
+            data.pop()
+        elif args.response:
             data.append({"role": "assistant", "content": answer})
