@@ -11,12 +11,16 @@ from rich.live import Live
 from aiohttp import ClientSession
 
 c = Console()
-sep = Markdown("---")
-baseDir = os.path.dirname(os.path.realpath(__file__))
-systemPrompt = { "role": "system", "content": "Use triple backticks with the language name for every code block in your markdown response, if any." }
+systemPrompt = {
+    "role": "system",
+    "content": "Use triple backticks with the language name for every code block in your markdown response, if any."
+}
 
 class Config:
+    base_dir = os.path.dirname(os.path.realpath(__file__))
+    default_key = os.path.join(base_dir, ".key")
     aio_socks_proxy = None
+    sep = Markdown("---")
 
 def query_openai(data: dict):
     messages = [ systemPrompt ]
@@ -27,7 +31,7 @@ def query_openai(data: dict):
             messages=messages
         )
         content = response["choices"][0]["message"]["content"]
-        c.print(Markdown(content), sep)
+        c.print(Markdown(content), Config.sep)
         return content
     except openai.error.RateLimitError as e:
         c.print(e)
@@ -66,7 +70,7 @@ async def query_openai_stream(data: dict):
     except openai.error.RateLimitError as e:
         c.print(e)
         answer = ""
-    c.print(sep)
+    c.print(Config.sep)
     if Config.aio_socks_proxy:
         await openai.aiosession.get().close()
     return answer
@@ -112,7 +116,7 @@ if __name__ == '__main__':
     parser.add_argument("-n", dest="no_stream", action="store_true", help="query openai in non-stream mode")
     parser.add_argument("-r", dest="response", action="store_true",
                         help="attach server response in request prompt, consume more tokens to get better results")
-    parser.add_argument("-k", dest="key", help="path to api_key", default=os.path.join(baseDir, ".key"))
+    parser.add_argument("-k", dest="key", help="path to api_key", default=Config.default_key)
     parser.add_argument("-p", dest="proxy", help="http/https proxy to use")
     args = parser.parse_args()
 
@@ -132,7 +136,7 @@ if __name__ == '__main__':
             Config.aio_socks_proxy = args.proxy
         else:
             openai.proxy = args.proxy
-    c.print(f"Attach response in prompt: {args.response}")
+    c.print(f"Response in prompt: {args.response}")
     c.print(f"Stream mode: {stream}")
 
     data = []
