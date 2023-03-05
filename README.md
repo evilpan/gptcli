@@ -28,7 +28,7 @@ Console help:
 $ gptcli.py -rp socks5://localhost:1080
 Loading key from .key
 Using proxy: socks5://localhost:1080
-Attach response in prompt: True
+Response in prompt: True
 Stream mode: True
 Input: help
 options:
@@ -38,12 +38,17 @@ options:
   exit     exit console
 ```
 
-# Run in Docker
+Run in Docker:
 
 ```sh
-docker build -t gptcli:latest .
-# Change path_to_key_on_the_host to the path where your .key file is stored on the host.
-docker run -it --rm -v ~/path_to_key_on_the_host/gptcli.key:/gptcli/.key gptcli:latest
+# build
+$ docker build -t gptcli:latest .
+
+# run
+$ docker run -it --rm -v $PWD/.key:/gptcli/.key gptcli:latest -h
+
+# for host proxy access:
+$ docker run --rm -it -v $PWD/.key:/gptcli/.key --network host gptcli:latest -rp socks5://127.0.0.1:1080
 ```
 
 # Example
