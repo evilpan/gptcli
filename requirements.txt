@@ -1,4 +1,4 @@
 openai
 rich
-pyreadline; platform_system == 'Windows'
+pyreadline3; platform_system == 'Windows'
 aiohttp_socks

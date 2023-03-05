@@ -10,6 +10,12 @@ from rich.markdown import Markdown, MarkdownIt
 from rich.live import Live
 from aiohttp import ClientSession
 
+import readline
+try:
+    import rlcompleter
+except ImportError:
+    pass
+
 c = Console()
 systemPrompt = {
     "role": "system",
@@ -121,7 +127,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     try:
-        import readline
         setup_readline()
     except Exception:
         pass
