@@ -16,6 +16,11 @@ try:
 except ImportError:
     pass
 
+import datetime
+now = datetime.datetime.now()
+filename = f"output_{now.strftime('%Y-%m-%d_%H-%M-%S')}.md"
+
+
 c = Console()
 systemPrompt = {
     "role": "system",
@@ -145,38 +150,47 @@ if __name__ == '__main__':
     c.print(f"Stream mode: {stream}")
 
     data = []
-    while True:
-        try:
-            # content = c.input("[bold yellow]Input:[/] ").strip()
-            with c.capture() as capture:
-                c.print("[bold yellow]Input:[/] ", end="")
-            content = input(capture.get())
-            if content == "<":
-                content = read_multiline()
-            content = content.strip()
-            if not content:
-                continue
-            if content == "reset":
-                data.clear()
-                c.print("Session reset.")
-                continue
-            if content == "help":
-                print_help()
-                continue
-            if content == "exit":
+    # Open the output file in append mode
+    with open(filename, "w") as f:
+        while True:
+            try:
+                with c.capture() as capture:
+                    c.print("[bold yellow]Input:[/] ", end="")
+                content = input(capture.get())
+                if content == "<":
+                    content = read_multiline()
+                content = content.strip()
+                f.write(f"Input: {content}\n\n")  # Write the user's input to the file
+                if not content:
+                    continue
+                if content == "reset":
+                    data.clear()
+                    c.print("Session reset.")
+                    continue
+                if content == "help":
+                    print_help()
+                    f.write("Help command executed.\n\n")  # Write the help command to the file
+                    continue
+                if content == "exit":
+                    f.write("Exit command executed.\n\n")  # Write the exit command to the file
+                    break
+                data.append({"role": "user", "content": content})
+                if stream:
+                    answer = asyncio.run(query_openai_stream(data))
+                    f.write(answer)
+                else:
+                    answer = query_openai(data)
+                    f.write(answer)
+            except KeyboardInterrupt:
+                c.print("Bye!")
+                f.write("Program interrupted by user.\n\n")  # Write the interruption to the file
                 break
-            data.append({"role": "user", "content": content})
-            if stream:
-                answer = asyncio.run(query_openai_stream(data))
-            else:
-                answer = query_openai(data)
-        except KeyboardInterrupt:
-            c.print("Bye!")
-            break
-        except EOFError as e:
-            c.print("Bye!")
-            break
-        if not answer:
-            data.pop()
-        elif args.response:
-            data.append({"role": "assistant", "content": answer})
+            except EOFError as e:
+                c.print("Bye!")
+                f.write("Program ended.\n\n")  # Write the end of file error to the file
+                break
+            if not answer:
+                data.pop()
+            elif args.response:
+                data.append({"role": "assistant", "content": answer})
+                f.write(f"Output: {answer}\n\n")  # Write the API's resp
