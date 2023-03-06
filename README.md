@@ -22,20 +22,16 @@ options:
   -p PROXY    http/https proxy to use (default: None)
 ```
 
-Console help:
+Console help (with tab-complete):
 
 ```
-$ gptcli.py -rp socks5://localhost:1080
-Loading key from .key
-Using proxy: socks5://localhost:1080
-Response in prompt: True
-Stream mode: True
+$ ./gptcli.py
 Input: help
 options:
-  <        input multiline, end with ctrl-d(Linux/macOS) or ctrl-z(Windows)
-  reset    reset session, i.e. clear chat history
-  help     show this help message
-  exit     exit console
+  <       input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows). cancel with ctrl-c
+  reset   reset session, i.e. clear chat history
+  help    show this help message
+  exit    exit console
 ```
 
 Run in Docker:

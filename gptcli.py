@@ -83,11 +83,11 @@ async def query_openai_stream(data: dict):
 
 
 def print_help():
-    c.print("""options:
-  <        input multiline, end with ctrl-d(Linux/macOS) or ctrl-z(Windows)
-  reset    reset session, i.e. clear chat history
-  help     show this help message
-  exit     exit console
+    c.print("""Options:
+  [bold]<        [/]input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows). cancel with ctrl-c
+  [bold]reset    [/]reset session, i.e. clear chat history
+  [bold]help     [/]show this help message
+  [bold]exit     [/]exit console
 """)
 
 def setup_readline():
@@ -103,10 +103,9 @@ def setup_readline():
 
 def read_multiline() -> str:
     contents = []
-    c.print("Input multiline data, cancel with ctrl-c:")
     while True:
         try:
-            line = input()
+            line = input("> ")
         except EOFError:
             c.print("--- EOF ---")
             break
