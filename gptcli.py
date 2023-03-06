@@ -103,7 +103,7 @@ def setup_readline():
 
 def read_multiline() -> str:
     contents = []
-    c.print("Input multiline data, cancel with ctrl-c:")
+    c.print("Input multiline data, finish input with ctrl-d(Linux/macOS) or ctrl-z(Windows), cancel with ctrl-c:")
     while True:
         try:
             line = input()
