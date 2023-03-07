@@ -39,7 +39,7 @@ def query_openai(data: dict):
         content = response["choices"][0]["message"]["content"]
         c.print(Markdown(content), Config.sep)
         return content
-    except openai.error.RateLimitError as e:
+    except openai.error.OpenAIError as e:
         c.print(e)
         return ""
 
@@ -73,7 +73,7 @@ async def query_openai_stream(data: dict):
                     lv.refresh()
                 elif finish_reason:
                     pass
-    except openai.error.RateLimitError as e:
+    except openai.error.OpenAIError as e:
         c.print(e)
         answer = ""
     c.print(Config.sep)
