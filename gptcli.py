@@ -27,6 +27,7 @@ class Config:
     default_key = os.path.join(base_dir, ".key")
     aio_socks_proxy = None
     sep = Markdown("---")
+    history = []
 
 def query_openai(data: dict):
     messages = [ systemPrompt ]
@@ -82,37 +83,71 @@ async def query_openai_stream(data: dict):
     return answer
 
 
-def print_help():
-    c.print("""Options:
-  [bold]<        [/]input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows). cancel with ctrl-c
-  [bold]reset    [/]reset session, i.e. clear chat history
-  [bold]help     [/]show this help message
-  [bold]exit     [/]exit console
-""")
+class ChatConsole:
 
-def setup_readline():
-    def completer(text, state):
-        options = ['reset', 'help', 'exit', '<']
-        matches = [o for o in options if o.startswith(text)]
-        if state < len(matches):
-            return matches[state]
-        else:
-            return None
-    readline.set_completer(completer)
-    readline.parse_and_bind('tab:complete')
-
-def read_multiline() -> str:
-    contents = []
-    while True:
+    def __init__(self) -> None:
+        parser = argparse.ArgumentParser("Input", add_help=False, exit_on_error=False)
+        parser.add_argument('-help', action='help', default=argparse.SUPPRESS, help="show this help message")
+        parser.add_argument("-reset", action='store_true',
+                            help="reset session, i.e. clear chat history")
+        parser.add_argument("-exit", action='store_true',
+                            help="exit console")
+        parser.add_argument("-multiline", action='store_true',
+                            help="input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows). cancel with ctrl-c")
+        self.parser = parser
         try:
-            line = input("> ")
-        except EOFError:
-            c.print("--- EOF ---")
-            break
-        except KeyboardInterrupt:
+            self.init_readline([opt for action in parser._actions for opt in action.option_strings])
+        except Exception:
+            c.print("Failed to setup readline, autocomplete may not work:", e)
+
+    def init_readline(self, options: dict[str]):
+        def completer(text, state):
+            matches = [o for o in options if o.startswith(text)]
+            if state < len(matches):
+                return matches[state]
+            else:
+                return None
+        readline.set_completer(completer)
+        readline.set_completer_delims(readline.get_completer_delims().replace('-', ''))
+        readline.parse_and_bind('tab:complete')
+
+    def parse_input(self) -> str:
+        # content = c.input("[bold yellow]Input:[/] ").strip()
+        with c.capture() as capture:
+            c.print("[bold yellow]Input:[/] ", end="")
+        content = input(capture.get())
+        if not content.startswith("-"):
+            return content
+        # handle console options locally
+        try:
+            args = self.parser.parse_args(content.split())
+        except SystemExit:
             return ""
-        contents.append(line)
-    return "\n".join(contents)
+        except argparse.ArgumentError as e:
+            print(e)
+            return ""
+        if args.reset:
+            Config.history.clear()
+        elif args.multiline:
+            return self.read_multiline()
+        elif args.exit:
+            raise EOFError
+        else:
+            print("???", args)
+        return ""
+
+    def read_multiline(self) -> str:
+        contents = []
+        while True:
+            try:
+                line = input("> ")
+            except EOFError:
+                c.print("--- EOF ---")
+                break
+            except KeyboardInterrupt:
+                return ""
+            contents.append(line)
+        return "\n".join(contents)
 
 
 if __name__ == '__main__':
@@ -124,11 +159,6 @@ if __name__ == '__main__':
     parser.add_argument("-k", dest="key", help="path to api_key", default=Config.default_key)
     parser.add_argument("-p", dest="proxy", help="http/https proxy to use")
     args = parser.parse_args()
-
-    try:
-        setup_readline()
-    except Exception:
-        pass
 
     c.print(f"Loading key from {args.key}")
     with open(args.key, "r") as f:
@@ -143,27 +173,13 @@ if __name__ == '__main__':
     c.print(f"Response in prompt: {args.response}")
     c.print(f"Stream mode: {stream}")
 
-    data = []
+    data = Config.history
+    chat = ChatConsole()
     while True:
         try:
-            # content = c.input("[bold yellow]Input:[/] ").strip()
-            with c.capture() as capture:
-                c.print("[bold yellow]Input:[/] ", end="")
-            content = input(capture.get())
-            if content == "<":
-                content = read_multiline()
-            content = content.strip()
+            content = chat.parse_input().strip()
             if not content:
                 continue
-            if content == "reset":
-                data.clear()
-                c.print("Session reset.")
-                continue
-            if content == "help":
-                print_help()
-                continue
-            if content == "exit":
-                break
             data.append({"role": "user", "content": content})
             if stream:
                 answer = asyncio.run(query_openai_stream(data))

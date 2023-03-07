@@ -26,12 +26,14 @@ Console help (with tab-complete):
 
 ```
 $ ./gptcli.py
-Input: help
+Input: -h
+usage: Input [-help] [-reset] [-exit] [-multiline]
+
 options:
-  <       input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows). cancel with ctrl-c
-  reset   reset session, i.e. clear chat history
-  help    show this help message
-  exit    exit console
+  -help       show this help message
+  -reset      reset session, i.e. clear chat history
+  -exit       exit console
+  -multiline  input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows). cancel with ctrl-c
 ```
 
 Run in Docker:
