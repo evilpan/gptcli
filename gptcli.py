@@ -128,6 +128,7 @@ class ChatConsole:
             return ""
         if args.reset:
             Config.history.clear()
+            c.print("Session cleared.")
         elif args.multiline:
             return self.read_multiline()
         elif args.exit:
