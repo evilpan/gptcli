@@ -76,7 +76,7 @@ def query_openai_stream(data: dict):
 class ChatConsole:
 
     def __init__(self) -> None:
-        parser = argparse.ArgumentParser("Input", add_help=False, exit_on_error=False)
+        parser = argparse.ArgumentParser("Input", add_help=False)
         parser.add_argument('-help', action='help', default=argparse.SUPPRESS, help="show this help message")
         parser.add_argument("-reset", action='store_true',
                             help="reset session, i.e. clear chat history")
