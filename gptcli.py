@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
 import os
-import asyncio
 import argparse
 import openai
 
 from rich.console import Console
 from rich.markdown import Markdown, MarkdownIt
 from rich.live import Live
-from aiohttp import ClientSession
 
 import readline
 try:
@@ -25,7 +23,6 @@ systemPrompt = {
 class Config:
     base_dir = os.path.dirname(os.path.realpath(__file__))
     default_key = os.path.join(base_dir, ".key")
-    aio_socks_proxy = None
     sep = Markdown("---")
     history = []
 
@@ -44,27 +41,19 @@ def query_openai(data: dict):
         c.print(e)
         return ""
 
-async def query_openai_stream(data: dict):
+def query_openai_stream(data: dict):
     messages = [ systemPrompt ]
     messages.extend(data)
     md = Markdown("")
     parser = MarkdownIt().enable("strikethrough")
-    if Config.aio_socks_proxy:
-        try:
-            from aiohttp_socks import ProxyConnector
-            connector = ProxyConnector.from_url(Config.aio_socks_proxy)
-            openai.aiosession.set(ClientSession(connector=connector))
-        except ImportError:
-            c.print("aiohttp_socks not installed, socks proxy for aiohttp won't work")
-            Config.aio_socks_proxy = None
     answer = ""
     try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            stream=True)
         with Live(md, auto_refresh=False) as lv:
-            async for part in await openai.ChatCompletion.acreate(
-                model="gpt-3.5-turbo",
-                messages=messages,
-                stream=True
-            ):
+            for part in response:
                 finish_reason = part["choices"][0]["finish_reason"]
                 if "content" in part["choices"][0]["delta"]:
                     content = part["choices"][0]["delta"]["content"]
@@ -77,9 +66,9 @@ async def query_openai_stream(data: dict):
     except openai.error.OpenAIError as e:
         c.print(e)
         answer = ""
+    except KeyboardInterrupt:
+        c.print("Canceled")
     c.print(Config.sep)
-    if Config.aio_socks_proxy:
-        await openai.aiosession.get().close()
     return answer
 
 
@@ -167,10 +156,7 @@ if __name__ == '__main__':
     stream = not args.no_stream
     if args.proxy:
         c.print(f"Using proxy: {args.proxy}")
-        if stream and args.proxy.startswith("socks"):
-            Config.aio_socks_proxy = args.proxy
-        else:
-            openai.proxy = args.proxy
+        openai.proxy = args.proxy
     c.print(f"Response in prompt: {args.response}")
     c.print(f"Stream mode: {stream}")
 
@@ -183,7 +169,7 @@ if __name__ == '__main__':
                 continue
             data.append({"role": "user", "content": content})
             if stream:
-                answer = asyncio.run(query_openai_stream(data))
+                answer = query_openai_stream(data)
             else:
                 answer = query_openai(data)
         except KeyboardInterrupt:

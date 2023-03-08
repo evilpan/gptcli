@@ -49,10 +49,6 @@ $ docker run -it --rm -v $PWD/.key:/gptcli/.key gptcli:latest -h
 $ docker run --rm -it -v $PWD/.key:/gptcli/.key --network host gptcli:latest -rp socks5://127.0.0.1:1080
 ```
 
-# Example
-
-![demo](./demo.jpg)
-
 # Feature
 
 - [x] Session based
@@ -61,12 +57,6 @@ $ docker run --rm -it -v $PWD/.key:/gptcli/.key --network host gptcli:latest -rp
 - [x] Proxy support
 - [x] Multiline input
 - [x] Stream output
-
-
-> NOTE: openai's library use aiohttp for stream mode request, and `aiohttp` only supports http/https proxy, not socks5.
-> see: https://github.com/aio-libs/aiohttp/pull/2539
-> The workaround is to use `aiohttp_socks` module for socks proxy in stream mode
-
 
 # LINK
 

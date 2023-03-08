@@ -1,4 +1,3 @@
 openai
 rich
 pyreadline3; platform_system == 'Windows'
-aiohttp_socks
