@@ -3,6 +3,7 @@
 import os
 import argparse
 import openai
+from typing import List
 
 from rich.console import Console
 from rich.markdown import Markdown, MarkdownIt
@@ -17,7 +18,7 @@ except ImportError:
 c = Console()
 systemPrompt = {
     "role": "system",
-    "content": "Use triple backticks with the language name for every code block in your markdown response, if any."
+    "content": "Show all your response in Markdown format."
 }
 
 class Config:
@@ -89,7 +90,7 @@ class ChatConsole:
         except Exception:
             c.print("Failed to setup readline, autocomplete may not work:", e)
 
-    def init_readline(self, options: dict[str]):
+    def init_readline(self, options: List[str]):
         def completer(text, state):
             matches = [o for o in options if o.startswith(text)]
             if state < len(matches):
