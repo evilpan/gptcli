@@ -58,6 +58,10 @@ $ docker run --rm -it -v $PWD/.key:/gptcli/.key --network host gptcli:latest -rp
 - [x] Multiline input
 - [x] Stream output
 
+# TODO
+
+- [ ] Save and load session from file
+
 # LINK
 
 - https://platform.openai.com/docs/introduction

@@ -16,19 +16,19 @@ except ImportError:
     pass
 
 c = Console()
-systemPrompt = {
-    "role": "system",
-    "content": "Show all your response in Markdown format."
-}
 
 class Config:
     base_dir = os.path.dirname(os.path.realpath(__file__))
     default_key = os.path.join(base_dir, ".key")
     sep = Markdown("---")
     history = []
+    preload = [
+        { "role": "system", "content": "Show your response in Markdown format with syntax highlight if it contains code." }
+    ]
 
 def query_openai(data: dict):
-    messages = [ systemPrompt ]
+    messages = []
+    messages.extend(Config.preload)
     messages.extend(data)
     try:
         response = openai.ChatCompletion.create(
@@ -40,10 +40,13 @@ def query_openai(data: dict):
         return content
     except openai.error.OpenAIError as e:
         c.print(e)
-        return ""
+    except Exception as e:
+        c.print(e)
+    return ""
 
 def query_openai_stream(data: dict):
-    messages = [ systemPrompt ]
+    messages = []
+    messages.extend(Config.preload)
     messages.extend(data)
     md = Markdown("")
     parser = MarkdownIt().enable("strikethrough")
@@ -64,11 +67,13 @@ def query_openai_stream(data: dict):
                     lv.refresh()
                 elif finish_reason:
                     pass
+    except KeyboardInterrupt:
+        c.print("Canceled")
     except openai.error.OpenAIError as e:
         c.print(e)
         answer = ""
-    except KeyboardInterrupt:
-        c.print("Canceled")
+    except Exception as e:
+        c.print(e)
     c.print(Config.sep)
     return answer
 
