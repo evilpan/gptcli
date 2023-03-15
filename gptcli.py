@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import json
 import argparse
 import openai
 from typing import List
@@ -15,24 +16,54 @@ try:
 except ImportError:
     pass
 
-c = Console()
-
 class Config:
-    base_dir = os.path.dirname(os.path.realpath(__file__))
-    default_key = os.path.join(base_dir, ".key")
     sep = Markdown("---")
-    history = []
-    preload = [
-        { "role": "system", "content": "Show your response in Markdown format with syntax highlight if it contains code." }
-    ]
+    baseDir = os.path.dirname(os.path.realpath(__file__))
+    default = os.path.join(baseDir, "config.json")
+
+    def __init__(self) -> None:
+        self.cfg = {}
+        self.history = []
+
+    def load(self, file):
+        with open(file, "r") as f:
+            self.cfg = json.load(f)
+        self.history.extend(self.cfg.get("history", []))
+
+    @property
+    def key(self):
+        return self.cfg.get("key", os.environ.get("OPENAI_API_KEY", ""))
+
+    @property
+    def model(self):
+        return self.cfg.get("model", "gpt-3.5-turbo")
+
+    @property
+    def prompt(self):
+        return self.cfg.get("prompt", [])
+
+    @property
+    def stream(self):
+        return self.cfg.get("stream", False)
+
+    @property
+    def response(self):
+        return self.cfg.get("response", False)
+
+    @property
+    def proxy(self):
+        return self.cfg.get("proxy", "")
+
+c = Console()
+kConfig = Config()
 
 def query_openai(data: dict):
     messages = []
-    messages.extend(Config.preload)
+    messages.extend(kConfig.prompt)
     messages.extend(data)
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model=kConfig.model,
             messages=messages
         )
         content = response["choices"][0]["message"]["content"]
@@ -46,14 +77,14 @@ def query_openai(data: dict):
 
 def query_openai_stream(data: dict):
     messages = []
-    messages.extend(Config.preload)
+    messages.extend(kConfig.prompt)
     messages.extend(data)
     md = Markdown("")
     parser = MarkdownIt().enable("strikethrough")
     answer = ""
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model=kConfig.model,
             messages=messages,
             stream=True)
         with Live(md, auto_refresh=False) as lv:
@@ -92,7 +123,7 @@ class ChatConsole:
         self.parser = parser
         try:
             self.init_readline([opt for action in parser._actions for opt in action.option_strings])
-        except Exception:
+        except Exception as e:
             c.print("Failed to setup readline, autocomplete may not work:", e)
 
     def init_readline(self, options: List[str]):
@@ -122,7 +153,7 @@ class ChatConsole:
             print(e)
             return ""
         if args.reset:
-            Config.history.clear()
+            kConfig.history.clear()
             c.print("Session cleared.")
         elif args.multiline:
             return self.read_multiline()
@@ -146,38 +177,33 @@ class ChatConsole:
         return "\n".join(contents)
 
 
-if __name__ == '__main__':
-
+def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-n", dest="no_stream", action="store_true", help="query openai in non-stream mode")
-    parser.add_argument("-r", dest="response", action="store_true",
-                        help="attach server response in request prompt, consume more tokens to get better results")
-    parser.add_argument("-k", dest="key", help="path to api_key", default=Config.default_key)
-    parser.add_argument("-p", dest="proxy", help="http/https proxy to use")
+    parser.add_argument("-c", dest="config", help="path to config.json", default=Config.default)
     args = parser.parse_args()
 
-    c.print(f"Loading key from {args.key}")
-    with open(args.key, "r") as f:
-        openai.api_key = f.read().strip()
-    stream = not args.no_stream
-    if args.proxy:
-        c.print(f"Using proxy: {args.proxy}")
-        openai.proxy = args.proxy
-    c.print(f"Response in prompt: {args.response}")
-    c.print(f"Stream mode: {stream}")
+    c.print(f"Loading config from {args.config}")
+    kConfig.load(args.config)
+    if kConfig.key:
+        openai.api_key = kConfig.key
+    if kConfig.proxy:
+        c.print(f"Using proxy: {kConfig.proxy}")
+        openai.proxy = kConfig.proxy
+    c.print(f"Response in prompt: {kConfig.response}")
+    c.print(f"Stream mode: {kConfig.stream}")
 
-    data = Config.history
+    hist = kConfig.history # just alias
     chat = ChatConsole()
     while True:
         try:
             content = chat.parse_input().strip()
             if not content:
                 continue
-            data.append({"role": "user", "content": content})
-            if stream:
-                answer = query_openai_stream(data)
+            hist.append({"role": "user", "content": content})
+            if kConfig.stream:
+                answer = query_openai_stream(hist)
             else:
-                answer = query_openai(data)
+                answer = query_openai(hist)
         except KeyboardInterrupt:
             c.print("Bye!")
             break
@@ -185,6 +211,10 @@ if __name__ == '__main__':
             c.print("Bye!")
             break
         if not answer:
-            data.pop()
-        elif args.response:
-            data.append({"role": "assistant", "content": answer})
+            hist.pop()
+        elif kConfig.response:
+            hist.append({"role": "assistant", "content": answer})
+
+
+if __name__ == '__main__':
+    main()

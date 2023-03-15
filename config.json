@@ -1,0 +1,11 @@
+{
+    "key": "",
+    "model": "gpt-3.5-turbo",
+    "stream": true,
+    "response": true,
+    "proxy": "",
+    "prompt": [
+        { "role": "system", "content": "Show your response in Markdown format with syntax highlight if it contains code, or just plaintext." },
+        { "role": "assistant", "content": "Okay." }
+    ]
+}

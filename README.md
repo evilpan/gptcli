@@ -6,24 +6,35 @@ Take chatGPT into command line.
 
 1. clone this repo
 2. pip3 install -U -r requirements.txt
-3. get your apikey from <https://platform.openai.com/account/api-keys> and put it in `.key`
+3. get your [OPENAI_API_KEY][key] and put it in `config.json`
 
 # Run
 
 ```sh
 $ ./gptcli.py -h
-usage: gptcli.py [-h] [-r] [-k KEY] [-p PROXY]
+usage: gptcli.py [-h] [-c CONFIG]
 
 options:
   -h, --help  show this help message and exit
-  -n          query openai in non-stream mode (default: False)
-  -r          attach server response in request prompt, consume more tokens to get better results (default: False)
-  -k KEY      path to api_key (default: .key)
-  -p PROXY    http/https proxy to use (default: None)
+  -c CONFIG   path to config.json (default: config.json)
+```
+
+Sample `config.json`:
+```js
+{
+    "key": "",                  // your api-key, will read from OPENAI_API_KEY envronment variable if empty
+    "model": "gpt-3.5-turbo",   // GPT Model
+    "stream": true,             // Stream mode
+    "response": true,           // Attach response in prompt, consume more tokens to get better results
+    "proxy": "",                // Use http/https/socks4a/socks5 proxy for requests to api.openai.com
+    "prompt": [                 // Customize your prompt
+        { "role": "system", "content": "Show your response in Markdown format with syntax highlight if it contains code, or just plaintext" },
+        { "role": "assistant", "content": "OK" }
+    ]
+}
 ```
 
 Console help (with tab-complete):
-
 ```
 $ ./gptcli.py
 Input: -h
@@ -69,3 +80,4 @@ $ docker run --rm -it -v $PWD/.key:/gptcli/.key --network host gptcli:latest -rp
 - https://platform.openai.com/account/api-keys
 
 [vid]: https://asciinema.org/a/564585
+[key]: https://platform.openai.com/account/api-keys
