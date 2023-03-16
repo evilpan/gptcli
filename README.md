@@ -34,6 +34,13 @@ Sample `config.json`:
 }
 ```
 
+Supported model:
+
+- [x] gpt-3.5-turbo
+- [x] gpt-4
+- [x] gpt-4-32k
+
+
 Console help (with tab-complete):
 ```
 $ ./gptcli.py
@@ -57,7 +64,7 @@ $ docker build -t gptcli:latest .
 $ docker run -it --rm -v $PWD/.key:/gptcli/.key gptcli:latest -h
 
 # for host proxy access:
-$ docker run --rm -it -v $PWD/.key:/gptcli/.key --network host gptcli:latest -rp socks5://127.0.0.1:1080
+$ docker run --rm -it -v $PWD/config.json:/gptcli/config.json --network host gptcli:latest -c /gptcli/config.json
 ```
 
 # Feature
