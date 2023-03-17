@@ -40,7 +40,6 @@ Supported model:
 - [x] gpt-4
 - [x] gpt-4-32k
 
-
 Console help (with tab-complete):
 ```
 $ ./gptcli.py
@@ -75,15 +74,14 @@ $ docker run --rm -it -v $PWD/config.json:/gptcli/config.json --network host gpt
 - [x] Proxy support
 - [x] Multiline input
 - [x] Stream output
-
-# TODO
-
+- [x] Single Python script
 - [ ] Save and load session from file
 
 # LINK
 
 - https://platform.openai.com/docs/introduction
 - https://platform.openai.com/docs/api-reference/completions
+- https://platform.openai.com/docs/models/overview
 - https://platform.openai.com/account/api-keys
 
 [vid]: https://asciinema.org/a/564585

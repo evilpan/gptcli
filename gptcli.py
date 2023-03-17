@@ -10,9 +10,9 @@ from rich.console import Console
 from rich.markdown import Markdown, MarkdownIt
 from rich.live import Live
 
-import readline
 try:
     import rlcompleter
+    import readline
 except ImportError:
     pass
 
