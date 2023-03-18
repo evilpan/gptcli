@@ -23,6 +23,7 @@ Sample `config.json`:
 ```js
 {
     "key": "",                  // your api-key, will read from OPENAI_API_KEY envronment variable if empty
+    "api_base": "",             // your api_base, will read from OPENAI_API_BASE envronment variable if empty
     "model": "gpt-3.5-turbo",   // GPT Model
     "stream": true,             // Stream mode
     "response": true,           // Attach response in prompt, consume more tokens to get better results
