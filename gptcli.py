@@ -33,6 +33,10 @@ class Config:
     @property
     def key(self):
         return self.cfg.get("key", os.environ.get("OPENAI_API_KEY", ""))
+    
+    @property
+    def api_base(self):
+        return self.cfg.get("api_base", os.environ.get("OPENAI_API_BASE", ""))
 
     @property
     def model(self):
@@ -186,6 +190,9 @@ def main():
     kConfig.load(args.config)
     if kConfig.key:
         openai.api_key = kConfig.key
+    if kConfig.api_base:
+        c.print(f"Using api_base: {kConfig.api_base}")
+        openai.api_base = kConfig.api_base
     if kConfig.proxy:
         c.print(f"Using proxy: {kConfig.proxy}")
         openai.proxy = kConfig.proxy
