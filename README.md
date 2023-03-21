@@ -6,6 +6,7 @@ Take chatGPT into command line.
 
 1. clone this repo
 2. pip3 install -U -r requirements.txt
+3. copy `demo_config.json` to `config.json`
 3. get your [OPENAI_API_KEY][key] and put it in `config.json`
 
 # Run
@@ -16,7 +17,7 @@ usage: gptcli.py [-h] [-c CONFIG]
 
 options:
   -h, --help  show this help message and exit
-  -c CONFIG   path to config.json (default: config.json)
+  -c CONFIG   path to your config.json (default: config.json)
 ```
 
 Sample `config.json`:
