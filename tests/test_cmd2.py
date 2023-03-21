@@ -2,13 +2,15 @@
 
 import cmd2
 from cmd2 import argparse_custom, with_argparser
+import argparse
+from argparse import Namespace
 from typing import List
 
 class GptCli(cmd2.Cmd):
     prompt = "chat> "
 
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self):
+        super().__init__(allow_cli_args=False)
         self.doc_header = "gptcli commands (use '.help -v' for verbose/'.help <topic>' for details):"
         self.hidden_commands = [
             "._relative_run_script", ".run_script", ".run_pyscript",
@@ -45,6 +47,15 @@ class GptCli(cmd2.Cmd):
             contents.append(line)
         self.handle_input("\n".join(contents))
 
+    parser_load = argparse_custom.DEFAULT_ARGUMENT_PARSER()
+    parser_load.add_argument("file", help="file to save conversation")
+    @with_argparser(parser_load)
+    def do_save(self, args: Namespace):
+        print("save")
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("-c", dest="config", help="path to config.json")
+    args = parser.parse_args()
     app = GptCli()
     app.cmdloop()

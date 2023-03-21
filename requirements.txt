@@ -2,3 +2,4 @@ openai
 rich
 pyreadline3; platform_system == 'Windows'
 requests[socks]
+cmd2

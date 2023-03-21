@@ -44,16 +44,20 @@ Supported model:
 Console help (with tab-complete):
 ```
 $ ./gptcli.py
-Input: -h
-usage: Input [-help] [-reset] [-save FILE] [-load FILE] [-exit] [-multiline]
+gptcli> .help -v
 
-options:
-  -help       show this help message
-  -reset      reset session, i.e. clear chat history
-  -save FILE  save current conversation to file
-  -load FILE  load conversation from file
-  -exit       exit console
-  -multiline  input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows). cancel with ctrl-c
+gptcli commands (use '.help -v' for verbose/'.help <topic>' for details):
+======================================================================================================
+.alias                Manage aliases
+.edit                 Run a text editor and optionally open a file with it
+.help                 List available commands or provide detailed help for a specific command
+.load                 Load conversation from file
+.multiline            input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows).
+                      cancel with ctrl-c
+.quit                 Exit this application
+.reset                Reset session, i.e. clear chat history
+.save                 Save current conversation to file
+.set                  Set a settable parameter or show current settings of parameters
 ```
 
 Run in Docker:
