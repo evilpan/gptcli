@@ -6,7 +6,6 @@
     "response": true,
     "proxy": "",
     "prompt": [
-        { "role": "system", "content": "Show your response in Markdown format with syntax highlight if it contains code, or just plaintext." },
-        { "role": "assistant", "content": "Okay." }
+        { "role": "system", "content": "If your response contains code, show with syntax highlight, for example ```js\ncode\n```" }
     ]
 }

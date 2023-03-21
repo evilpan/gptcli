@@ -29,8 +29,7 @@ Sample `config.json`:
     "response": true,           // Attach response in prompt, consume more tokens to get better results
     "proxy": "",                // Use http/https/socks4a/socks5 proxy for requests to api.openai.com
     "prompt": [                 // Customize your prompt
-        { "role": "system", "content": "Show your response in Markdown format with syntax highlight if it contains code, or just plaintext" },
-        { "role": "assistant", "content": "OK" }
+        { "role": "system", "content": "If your response contains code, show with syntax highlight, for example ```js\ncode\n```" }
     ]
 }
 ```
@@ -48,12 +47,10 @@ gptcli> .help -v
 
 gptcli commands (use '.help -v' for verbose/'.help <topic>' for details):
 ======================================================================================================
-.alias                Manage aliases
 .edit                 Run a text editor and optionally open a file with it
 .help                 List available commands or provide detailed help for a specific command
 .load                 Load conversation from file
-.multiline            input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows).
-                      cancel with ctrl-c
+.multiline            input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows). Cancel with ctrl-c
 .quit                 Exit this application
 .reset                Reset session, i.e. clear chat history
 .save                 Save current conversation to file
@@ -91,5 +88,5 @@ $ docker run --rm -it -v $PWD/config.json:/gptcli/config.json --network host gpt
 - https://platform.openai.com/docs/models/overview
 - https://platform.openai.com/account/api-keys
 
-[vid]: https://asciinema.org/a/564585
+[vid]: https://asciinema.org/a/568859
 [key]: https://platform.openai.com/account/api-keys

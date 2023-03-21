@@ -64,7 +64,8 @@ class GptCli(cmd2.Cmd):
         self.api_response = self.config.response
         self.proxy = self.config.proxy
         openai.api_key = self.api_key
-        openai.api_base = self.api_base
+        if self.api_base:
+            openai.api_base = self.api_base
         if self.proxy:
             self.print("Proxy:", self.proxy)
             openai.proxy = self.proxy
@@ -173,8 +174,7 @@ class GptCli(cmd2.Cmd):
     parser_ml = argparse_custom.DEFAULT_ARGUMENT_PARSER(add_help=False)
     @with_argparser(parser_ml)
     def do_multiline(self, args):
-        """input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows).
-        cancel with ctrl-c"""
+        "input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows). Cancel with ctrl-c"
         contents = []
         while True:
             try:
