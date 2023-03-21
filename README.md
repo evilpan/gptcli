@@ -45,11 +45,13 @@ Console help (with tab-complete):
 ```
 $ ./gptcli.py
 Input: -h
-usage: Input [-help] [-reset] [-exit] [-multiline]
+usage: Input [-help] [-reset] [-save FILE] [-load FILE] [-exit] [-multiline]
 
 options:
   -help       show this help message
   -reset      reset session, i.e. clear chat history
+  -save FILE  save current conversation to file
+  -load FILE  load conversation from file
   -exit       exit console
   -multiline  input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows). cancel with ctrl-c
 ```
@@ -76,7 +78,7 @@ $ docker run --rm -it -v $PWD/config.json:/gptcli/config.json --network host gpt
 - [x] Multiline input
 - [x] Stream output
 - [x] Single Python script
-- [ ] Save and load session from file
+- [x] Save and load session from file
 
 # LINK
 

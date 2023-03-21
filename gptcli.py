@@ -28,7 +28,16 @@ class Config:
     def load(self, file):
         with open(file, "r") as f:
             self.cfg = json.load(f)
-        self.history.extend(self.cfg.get("history", []))
+
+    def load_session(self, file):
+        with open(file, "r") as f:
+            self.history = json.load(f)
+        print("Load {} records from {}".format(len(self.history), file))
+
+    def save_session(self, file):
+        print("Save {} records to {}".format(len(self.history), file))
+        with open(file, "w") as f:
+            json.dump(self.history, f, indent=2)
 
     @property
     def key(self):
@@ -120,6 +129,10 @@ class ChatConsole:
         parser.add_argument('-help', action='help', default=argparse.SUPPRESS, help="show this help message")
         parser.add_argument("-reset", action='store_true',
                             help="reset session, i.e. clear chat history")
+        parser.add_argument("-save", metavar="FILE", type=str,
+                            help="save current conversation to file")
+        parser.add_argument("-load", metavar="FILE", type=str,
+                            help="load conversation from file")
         parser.add_argument("-exit", action='store_true',
                             help="exit console")
         parser.add_argument("-multiline", action='store_true',
@@ -159,6 +172,10 @@ class ChatConsole:
         if args.reset:
             kConfig.history.clear()
             c.print("Session cleared.")
+        elif args.save:
+            kConfig.save_session(args.save)
+        elif args.load:
+            kConfig.load_session(args.load)
         elif args.multiline:
             return self.read_multiline()
         elif args.exit:
@@ -199,13 +216,13 @@ def main():
     c.print(f"Response in prompt: {kConfig.response}")
     c.print(f"Stream mode: {kConfig.stream}")
 
-    hist = kConfig.history # just alias
     chat = ChatConsole()
     while True:
         try:
             content = chat.parse_input().strip()
             if not content:
                 continue
+            hist = kConfig.history # alias
             hist.append({"role": "user", "content": content})
             if kConfig.stream:
                 answer = query_openai_stream(hist)
