@@ -7,7 +7,7 @@ Take chatGPT into command line.
 1. clone this repo
 2. pip3 install -U -r requirements.txt
 3. copy `demo_config.json` to `config.json`
-3. get your [OPENAI_API_KEY][key] and put it in `config.json`
+4. get your [OPENAI_API_KEY][key] and put it in `config.json`
 
 # Run
 
@@ -50,11 +50,12 @@ gptcli commands (use '.help -v' for verbose/'.help <topic>' for details):
 ======================================================================================================
 .edit                 Run a text editor and optionally open a file with it
 .help                 List available commands or provide detailed help for a specific command
-.load                 Load conversation from file
-.multiline            input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows). Cancel with ctrl-c
+.load                 Load conversation from Markdown/JSON file
+.multiline            input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows). Cancel
+                      with ctrl-c
 .quit                 Exit this application
 .reset                Reset session, i.e. clear chat history
-.save                 Save current conversation to file
+.save                 Save current conversation to Markdown/JSON file
 .set                  Set a settable parameter or show current settings of parameters
 ```
 
@@ -80,7 +81,7 @@ $ docker run --rm -it -v $PWD/config.json:/gptcli/config.json --network host gpt
 - [x] Multiline input
 - [x] Stream output
 - [x] Single Python script
-- [x] Save and load session from file
+- [x] Save and load session from file (Markdown/JSON)
 
 # LINK
 
