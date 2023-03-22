@@ -46,7 +46,12 @@ class GptCli(cmd2.Cmd):
     prompt = "gptcli> "
 
     def __init__(self, config):
-        super().__init__(allow_cli_args=False)
+        super().__init__(
+            allow_cli_args=False,
+            allow_redirection=False,
+            shortcuts={},
+        )
+        self.aliases[".exit"] = ".quit"
         self.doc_header = "gptcli commands (use '.help -v' for verbose/'.help <topic>' for details):"
         self.hidden_commands = [
             "._relative_run_script", ".run_script", ".run_pyscript",

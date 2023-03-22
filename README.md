@@ -74,14 +74,14 @@ $ docker run --rm -it -v $PWD/config.json:/gptcli/config.json --network host gpt
 
 # Feature
 
-- [x] Session based
-- [x] Markdown support
-- [x] Syntax highlight
-- [x] Proxy support
-- [x] Multiline input
-- [x] Stream output
 - [x] Single Python script
-- [x] Save and load session from file (Markdown/JSON)
+- [x] Session based
+- [x] Markdown support with code syntax highlight
+- [x] Stream output support
+- [x] Proxy support (HTTP/HTTPS/SOCKS4A/SOCKS5)
+- [x] Multiline input support (via `.multiline` command)
+- [x] Save and load session from file (Markdown/JSON) (via `.save` and `.load` command)
+- [ ] Integrate with `llama_index` to support chatting with documents
 
 # LINK
 
