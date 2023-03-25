@@ -20,6 +20,7 @@ class Config:
     baseDir = os.path.dirname(os.path.realpath(__file__))
     default = os.path.join(baseDir, "config.json")
     mdSep = '\n\n' + '-' * 10 + '\n'
+    encodings = ["utf8", "gbk"]
 
     def __init__(self, file=None) -> None:
         self.cfg = {}
@@ -121,10 +122,10 @@ class GptCli(cmd2.Cmd):
         elif self.api_response:
             self.session.append({"role": "assistant", "content": answer})
 
-    def load_session(self, file, mode="md", append=False):
+    def load_session(self, file, mode="md", encoding=None, append=False):
         if not append:
             self.session.clear()
-        with open(file, "r") as f:
+        with open(file, "r", encoding=encoding) as f:
             data = f.read()
         if mode == "json":
             self.session.extend(json.loads(data))
@@ -134,16 +135,16 @@ class GptCli(cmd2.Cmd):
                 self.session.append({"role": role, "content": content})
         self.print("Load {} records from {}".format(len(self.session), file))
 
-    def save_session(self, file, mode="md"):
+    def save_session(self, file, mode="md", encoding=None):
         self.print("Save {} records to {}".format(len(self.session), file))
         if mode == "json":
-            with open(file, "w") as f:
-                json.dump(self.session, f, indent=2)
+            data = json.dumps(self.session, indent=2)
         elif mode == "md":
             chats = ["{}: {}".format(chat["role"], chat["content"])
                      for chat in self.session]
-            with open(file, "w") as f:
-                f.write(Config.mdSep.join(chats))
+            data = Config.mdSep.join(chats)
+        with open(file, "w", encoding=encoding) as f:
+            f.write(data)
     
     def query_openai(self, data: dict) -> str:
         messages = []
@@ -219,24 +220,28 @@ class GptCli(cmd2.Cmd):
     parser_save = argparse_custom.DEFAULT_ARGUMENT_PARSER()
     parser_save.add_argument("-m", dest="mode", choices=["json", "md"],
                              default="md", help="save as json or markdown (default: md)")
+    parser_save.add_argument("-e", dest="encoding", choices=Config.encodings,
+                             default=Config.encodings[0], help="file encoding")
     parser_save.add_argument("file", help="target file to save",
                             completer=cmd2.Cmd.path_complete)
     @with_argparser(parser_save)
     def do_save(self, args: Namespace):
         "Save current conversation to Markdown/JSON file"
-        self.save_session(args.file, args.mode)
+        self.save_session(args.file, args.mode, args.encoding)
 
     parser_load = argparse_custom.DEFAULT_ARGUMENT_PARSER()
-    parser_load.add_argument("-f", dest="append", action="store_true",
+    parser_load.add_argument("-a", dest="append", action="store_true",
                              help="append to current chat, by default current chat will be cleared")
     parser_load.add_argument("-m", dest="mode", choices=["json", "md"],
                              default="md", help="load as json or markdown (default: md)")
+    parser_load.add_argument("-e", dest="encoding", choices=Config.encodings,
+                             default=Config.encodings[0], help="file encoding")
     parser_load.add_argument("file", help="target file to load",
                             completer=cmd2.Cmd.path_complete)
     @with_argparser(parser_load)
     def do_load(self, args: Namespace):
         "Load conversation from Markdown/JSON file"
-        self.load_session(args.file, args.mode, args.append)
+        self.load_session(args.file, args.mode, args.encoding, args.append)
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
