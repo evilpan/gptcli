@@ -7,7 +7,7 @@ from argparse import Namespace
 from typing import List
 
 from rich.console import Console
-from rich.markdown import Markdown, MarkdownIt
+from rich.markdown import Markdown
 from rich.live import Live
 
 import cmd2
@@ -166,23 +166,19 @@ class GptCli(cmd2.Cmd):
         messages = []
         messages.extend(self.api_prompt)
         messages.extend(data)
-        md = Markdown("")
-        parser = MarkdownIt().enable("strikethrough")
         answer = ""
         try:
             response = openai.ChatCompletion.create(
                 model=self.api_model,
                 messages=messages,
                 stream=True)
-            with Live(md, auto_refresh=False) as lv:
+            with Live(auto_refresh=False, vertical_overflow="visible") as lv:
                 for part in response:
                     finish_reason = part["choices"][0]["finish_reason"]
                     if "content" in part["choices"][0]["delta"]:
                         content = part["choices"][0]["delta"]["content"]
                         answer += content
-                        md.markup = answer
-                        md.parsed = parser.parse(md.markup)
-                        lv.refresh()
+                        lv.update(Markdown(answer), refresh=True)
                     elif finish_reason:
                         pass
         except KeyboardInterrupt:
