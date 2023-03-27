@@ -2,6 +2,7 @@
 
 import os
 import json
+import inspect
 import argparse
 from argparse import Namespace
 from typing import List
@@ -95,10 +96,13 @@ class GptCli(cmd2.Cmd):
         self.print(f"openai.{param} = {new}")
         setattr(openai, param, new)
 
-    def _cmd_func_name(self, command: str) -> str:
+    def cmd_func(self, command: str):
         if command.startswith("."):
             command = command[1:]
-        return super()._cmd_func_name(command)
+            return super().cmd_func(command)
+        if inspect.currentframe().f_back.f_code.co_name == "_register_subcommands":
+            return super().cmd_func(command)
+        return None
 
     def get_all_commands(self) -> List[str]:
         return list(map(lambda c: f".{c}", super().get_all_commands()))
