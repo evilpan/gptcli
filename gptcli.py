@@ -65,28 +65,21 @@ class GptCli(cmd2.Cmd):
         self.session = []
         # Init config
         self.config = Config(config)
-        self.api_key = self.config.api_key
-        self.api_base = self.config.api_base
-        self.api_model = self.config.model
-        self.api_prompt = self.config.prompt
-        self.api_stream = self.config.stream
-        self.api_response = self.config.response
-        self.proxy = self.config.proxy
-        openai.api_key = self.api_key
-        if self.api_base:
-            openai.api_base = self.api_base
-        if self.proxy:
-            self.print("Proxy:", self.proxy)
-            openai.proxy = self.proxy
-        self.print("Response in prompt:", self.api_response)
-        self.print("Stream mode:", self.api_stream)
+        openai.api_key = self.config.api_key
+        if self.config.api_base:
+            openai.api_base = self.config.api_base
+        if self.config.proxy:
+            self.print("Proxy:", self.config.proxy)
+            openai.proxy = self.config.proxy
+        self.print("Response in prompt:", self.config.response)
+        self.print("Stream mode:", self.config.stream)
         # Init settable
         # NOTE: proxy is not settable in runtime since openai use pre-configured session
-        self.add_settable(Settable("api_key", str, "OPENAI_API_KEY", self, onchange_cb=self.openai_set))
-        self.add_settable(Settable("api_base", str, "OPENAI_API_BASE", self, onchange_cb=self.openai_set))
-        self.add_settable(Settable("response", bool, "Attach response in prompt", self, settable_attrib_name="api_response"))
-        self.add_settable(Settable("stream", bool, "Enable stream mode", self, settable_attrib_name="api_stream"))
-        self.add_settable(Settable("model", str, "OPENAI model", self, settable_attrib_name="api_model"))
+        self.add_settable(Settable("api_key", str, "OPENAI_API_KEY", self.config, onchange_cb=self.openai_set))
+        self.add_settable(Settable("api_base", str, "OPENAI_API_BASE", self.config, onchange_cb=self.openai_set))
+        self.add_settable(Settable("response", bool, "Attach response in prompt", self.config))
+        self.add_settable(Settable("stream", bool, "Enable stream mode", self.config))
+        self.add_settable(Settable("model", str, "OPENAI model", self.config))
         # MISC
         with self.console.capture() as capture:
             self.print(f"[bold yellow]{self.prompt}[/]", end="")
@@ -117,13 +110,13 @@ class GptCli(cmd2.Cmd):
         if not content:
             return
         self.session.append({"role": "user", "content": content})
-        if self.api_stream:
+        if self.config.stream:
             answer = self.query_openai_stream(self.session)
         else:
             answer = self.query_openai(self.session)
         if not answer:
             self.session.pop()
-        elif self.api_response:
+        elif self.config.response:
             self.session.append({"role": "assistant", "content": answer})
 
     def load_session(self, file, mode="md", encoding=None, append=False):
@@ -152,11 +145,11 @@ class GptCli(cmd2.Cmd):
     
     def query_openai(self, data: dict) -> str:
         messages = []
-        messages.extend(self.api_prompt)
+        messages.extend(self.config.prompt)
         messages.extend(data)
         try:
             response = openai.ChatCompletion.create(
-                model=self.api_model,
+                model=self.config.model,
                 messages=messages
             )
             content = response["choices"][0]["message"]["content"]
@@ -168,12 +161,12 @@ class GptCli(cmd2.Cmd):
 
     def query_openai_stream(self, data: dict) -> str:
         messages = []
-        messages.extend(self.api_prompt)
+        messages.extend(self.config.prompt)
         messages.extend(data)
         answer = ""
         try:
             response = openai.ChatCompletion.create(
-                model=self.api_model,
+                model=self.config.model,
                 messages=messages,
                 stream=True)
             with Live(auto_refresh=False, vertical_overflow="visible") as lv:
