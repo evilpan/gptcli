@@ -37,6 +37,7 @@ class Config:
         self.model = c.get("model", "gpt-3.5-turbo")
         self.prompt = c.get("prompt", [])
         self.stream = c.get("stream", False)
+        self.stream_render = c.get("stream_render", False)
         self.response = c.get("response", False)
         self.proxy = c.get("proxy", "")
 
@@ -79,6 +80,7 @@ class GptCli(cmd2.Cmd):
         self.add_settable(Settable("api_base", str, "OPENAI_API_BASE", self.config, onchange_cb=self.openai_set))
         self.add_settable(Settable("response", bool, "Attach response in prompt", self.config))
         self.add_settable(Settable("stream", bool, "Enable stream mode", self.config))
+        self.add_settable(Settable("stream_render", bool, "Render live markdown in stream mode", self.config))
         self.add_settable(Settable("model", str, "OPENAI model", self.config))
         # MISC
         with self.console.capture() as capture:
@@ -175,9 +177,13 @@ class GptCli(cmd2.Cmd):
                     if "content" in part["choices"][0]["delta"]:
                         content = part["choices"][0]["delta"]["content"]
                         answer += content
-                        lv.update(Markdown(answer), refresh=True)
+                        if self.config.stream_render:
+                            lv.update(Markdown(answer), refresh=True)
+                        else:
+                            lv.update(answer, refresh=True)
                     elif finish_reason:
-                        pass
+                        if answer:
+                            lv.update(Markdown(answer), refresh=True)
         except KeyboardInterrupt:
             self.print("Canceled")
         except openai.error.OpenAIError as e:
