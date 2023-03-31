@@ -192,7 +192,7 @@ class GptCli(cmd2.Cmd):
         self.print(Config.sep)
         return answer
 
-    parser_ml = argparse_custom.DEFAULT_ARGUMENT_PARSER(add_help=False)
+    parser_ml = argparse_custom.DEFAULT_ARGUMENT_PARSER()
     @with_argparser(parser_ml)
     def do_multiline(self, args):
         "input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows). Cancel with ctrl-c"
@@ -209,7 +209,7 @@ class GptCli(cmd2.Cmd):
             contents.append(line)
         self.handle_input("\n".join(contents))
 
-    parser_reset = argparse_custom.DEFAULT_ARGUMENT_PARSER(add_help=False)
+    parser_reset = argparse_custom.DEFAULT_ARGUMENT_PARSER()
     @with_argparser(parser_reset)
     def do_reset(self, args):
         "Reset session, i.e. clear chat history"

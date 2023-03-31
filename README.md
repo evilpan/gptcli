@@ -27,6 +27,7 @@ Sample `config.json`:
     "api_base": "",             // your api_base, will read from OPENAI_API_BASE envronment variable if empty
     "model": "gpt-3.5-turbo",   // GPT Model
     "stream": true,             // Stream mode
+    "stream_render": false,     // Render live markdown in stream mode
     "response": true,           // Attach response in prompt, consume more tokens to get better results
     "proxy": "",                // Use http/https/socks4a/socks5 proxy for requests to api.openai.com
     "prompt": [                 // Customize your prompt
