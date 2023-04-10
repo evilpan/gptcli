@@ -7,6 +7,8 @@ import argparse
 from argparse import Namespace
 from typing import List
 
+import tiktoken
+
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.live import Live
@@ -40,6 +42,7 @@ class Config:
         self.stream_render = c.get("stream_render", False)
         self.response = c.get("response", False)
         self.proxy = c.get("proxy", "")
+        self.showtokens = c.get("showtokens", False)
 
     def get(self, key, default=None):
         return self.cfg.get(key, default)
@@ -82,10 +85,15 @@ class GptCli(cmd2.Cmd):
         self.add_settable(Settable("stream", bool, "Enable stream mode", self.config))
         self.add_settable(Settable("stream_render", bool, "Render live markdown in stream mode", self.config))
         self.add_settable(Settable("model", str, "OPENAI model", self.config))
+        self.add_settable(Settable("showtokens", bool, "Show tokens used with the output", self.config))
         # MISC
         with self.console.capture() as capture:
             self.print(f"[bold yellow]{self.prompt}[/]", end="")
         self.prompt = capture.get()
+
+        self.encoding = tiktoken.encoding_for_model(self.config.model)
+        self.single_tokens_used = 0
+        self.total_tokens_used  = 0
 
     def openai_set(self, param, old, new):
         self.print(f"openai.{param} = {new}")
@@ -120,6 +128,9 @@ class GptCli(cmd2.Cmd):
             self.session.pop()
         elif self.config.response:
             self.session.append({"role": "assistant", "content": answer})
+
+        if self.config.showtokens:
+            print(f"Tokens Used: {self.single_tokens_used}/{self.total_tokens_used}")
 
     def load_session(self, file, mode="md", encoding=None, append=False):
         if not append:
@@ -156,6 +167,9 @@ class GptCli(cmd2.Cmd):
             )
             content = response["choices"][0]["message"]["content"]
             self.print(Markdown(content), Config.sep)
+
+            self.single_tokens_used = response["usage"]["total_tokens"]
+            self.total_tokens_used += self.single_tokens_used # add total tokens as told by the api, don't need to manually calc for this one
             return content
         except openai.error.OpenAIError as e:
             self.print("OpenAIError:", e)
@@ -166,6 +180,7 @@ class GptCli(cmd2.Cmd):
         messages.extend(self.config.prompt)
         messages.extend(data)
         answer = ""
+        self.single_tokens_used = sum([len(self.encoding.encode(s["content"])) for s in messages]) + 5 * len(messages) + 3
         try:
             response = openai.ChatCompletion.create(
                 model=self.config.model,
@@ -177,6 +192,7 @@ class GptCli(cmd2.Cmd):
                     if "content" in part["choices"][0]["delta"]:
                         content = part["choices"][0]["delta"]["content"]
                         answer += content
+                        self.single_tokens_used += len(self.encoding.encode(content))
                         if self.config.stream_render:
                             lv.update(Markdown(answer), refresh=True)
                         else:
@@ -184,12 +200,14 @@ class GptCli(cmd2.Cmd):
                     elif finish_reason:
                         if answer:
                             lv.update(Markdown(answer), refresh=True)
+
         except KeyboardInterrupt:
             self.print("Canceled")
         except openai.error.OpenAIError as e:
             self.print("OpenAIError:", e)
             answer = ""
         self.print(Config.sep)
+        self.total_tokens_used += self.single_tokens_used
         return answer
 
     parser_ml = argparse_custom.DEFAULT_ARGUMENT_PARSER()
@@ -241,6 +259,10 @@ class GptCli(cmd2.Cmd):
     def do_load(self, args: Namespace):
         "Load conversation from Markdown/JSON file"
         self.load_session(args.file, args.mode, args.encoding, args.append)
+
+    def do_tokens(self, args: Namespace):
+        "Display total tokens used this session"
+        print(f"Total tokens used this session: {self.total_tokens_used}")
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
