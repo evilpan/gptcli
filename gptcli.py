@@ -121,16 +121,26 @@ class GptCli(cmd2.Cmd):
             return
         self.session.append({"role": "user", "content": content})
         if self.config.stream:
-            answer = self.query_openai_stream(self.session)
+            answer = self.query_openai_stream(self.messages)
         else:
-            answer = self.query_openai(self.session)
+            answer = self.query_openai(self.messages)
         if not answer:
             self.session.pop()
-        elif self.config.response:
+        else:
             self.session.append({"role": "assistant", "content": answer})
 
         if self.config.showtokens:
             print(f"Tokens Used: {self.single_tokens_used}/{self.total_tokens_used}")
+
+    @property
+    def messages(self):
+        msgs = []
+        msgs.extend(self.config.prompt)
+        if self.config.response:
+            msgs.extend(self.session)
+        else:
+            msgs.extend([s for s in self.session if s["role"] != "assistant"])
+        return msgs
 
     def load_session(self, file, mode="md", encoding=None, append=False):
         if not append:
@@ -156,10 +166,7 @@ class GptCli(cmd2.Cmd):
         with open(file, "w", encoding=encoding) as f:
             f.write(data)
     
-    def query_openai(self, data: dict) -> str:
-        messages = []
-        messages.extend(self.config.prompt)
-        messages.extend(data)
+    def query_openai(self, messages) -> str:
         try:
             response = openai.ChatCompletion.create(
                 model=self.config.model,
@@ -175,10 +182,7 @@ class GptCli(cmd2.Cmd):
             self.print("OpenAIError:", e)
         return ""
 
-    def query_openai_stream(self, data: dict) -> str:
-        messages = []
-        messages.extend(self.config.prompt)
-        messages.extend(data)
+    def query_openai_stream(self, messages) -> str:
         answer = ""
         self.single_tokens_used = sum([len(self.encoding.encode(s["content"])) for s in messages]) + 5 * len(messages) + 3
         try:
