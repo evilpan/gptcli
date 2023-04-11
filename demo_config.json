@@ -5,6 +5,7 @@
     "stream": true,
     "stream_render": true,
     "response": true,
+    "showtokens": false,
     "proxy": "",
     "prompt": [
         { "role": "system", "content": "If your response contains code, show with syntax highlight, for example ```js\ncode\n```" }

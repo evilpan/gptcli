@@ -7,8 +7,6 @@ import argparse
 from argparse import Namespace
 from typing import List
 
-import tiktoken
-
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.live import Live
@@ -91,7 +89,6 @@ class GptCli(cmd2.Cmd):
             self.print(f"[bold yellow]{self.prompt}[/]", end="")
         self.prompt = capture.get()
 
-        self.encoding = tiktoken.encoding_for_model(self.config.model)
         self.single_tokens_used = 0
         self.total_tokens_used  = 0
 
@@ -130,7 +127,7 @@ class GptCli(cmd2.Cmd):
             self.session.append({"role": "assistant", "content": answer})
 
         if self.config.showtokens:
-            print(f"Tokens Used: {self.single_tokens_used}/{self.total_tokens_used}")
+            self.console.log(f"Tokens Used: {self.single_tokens_used}/{self.total_tokens_used}")
 
     @property
     def messages(self):
@@ -166,6 +163,30 @@ class GptCli(cmd2.Cmd):
         with open(file, "w", encoding=encoding) as f:
             f.write(data)
     
+    # Reference:
+    # https://platform.openai.com/docs/guides/chat/managing-tokens
+    def num_tokens_from_messages(self, messages):
+        """Returns the number of tokens used by a list of messages."""
+        import tiktoken
+        model = self.config.model
+        try:
+            encoding = tiktoken.encoding_for_model(model)
+        except KeyError:
+            encoding = tiktoken.get_encoding("cl100k_base")
+        if model == "gpt-3.5-turbo":  # note: future models may deviate from this
+            num_tokens = 0
+            for message in messages:
+                num_tokens += 4  # every message follows <im_start>{role/name}\n{content}<im_end>\n
+                for key, value in message.items():
+                    num_tokens += len(encoding.encode(value))
+                    if key == "name":  # if there's a name, the role is omitted
+                        num_tokens += -1  # role is always required and always 1 token
+            num_tokens += 2  # every reply is primed with <im_start>assistant
+            return num_tokens
+        else:
+            raise NotImplementedError(f"""num_tokens_from_messages() is not presently implemented for model {model}.
+        See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens.""")
+
     def query_openai(self, messages) -> str:
         try:
             response = openai.ChatCompletion.create(
@@ -176,7 +197,7 @@ class GptCli(cmd2.Cmd):
             self.print(Markdown(content), Config.sep)
 
             self.single_tokens_used = response["usage"]["total_tokens"]
-            self.total_tokens_used += self.single_tokens_used # add total tokens as told by the api, don't need to manually calc for this one
+            self.total_tokens_used += self.single_tokens_used
             return content
         except openai.error.OpenAIError as e:
             self.print("OpenAIError:", e)
@@ -184,7 +205,6 @@ class GptCli(cmd2.Cmd):
 
     def query_openai_stream(self, messages) -> str:
         answer = ""
-        self.single_tokens_used = sum([len(self.encoding.encode(s["content"])) for s in messages]) + 5 * len(messages) + 3
         try:
             response = openai.ChatCompletion.create(
                 model=self.config.model,
@@ -196,7 +216,6 @@ class GptCli(cmd2.Cmd):
                     if "content" in part["choices"][0]["delta"]:
                         content = part["choices"][0]["delta"]["content"]
                         answer += content
-                        self.single_tokens_used += len(self.encoding.encode(content))
                         if self.config.stream_render:
                             lv.update(Markdown(answer), refresh=True)
                         else:
@@ -211,6 +230,7 @@ class GptCli(cmd2.Cmd):
             self.print("OpenAIError:", e)
             answer = ""
         self.print(Config.sep)
+        self.single_tokens_used = self.num_tokens_from_messages(messages)
         self.total_tokens_used += self.single_tokens_used
         return answer
 
@@ -266,7 +286,7 @@ class GptCli(cmd2.Cmd):
 
     def do_tokens(self, args: Namespace):
         "Display total tokens used this session"
-        print(f"Total tokens used this session: {self.total_tokens_used}")
+        self.print(f"Total tokens used this session: {self.total_tokens_used}")
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
