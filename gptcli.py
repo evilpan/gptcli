@@ -127,7 +127,7 @@ class GptCli(cmd2.Cmd):
             self.session.append({"role": "assistant", "content": answer})
 
         if self.config.showtokens:
-            self.console.log(f"Tokens Used: {self.single_tokens_used}/{self.total_tokens_used}")
+            self.console.log(f"Tokens used: {self.single_tokens_used}")
 
     @property
     def messages(self):
@@ -230,7 +230,7 @@ class GptCli(cmd2.Cmd):
             self.print("OpenAIError:", e)
             answer = ""
         self.print(Config.sep)
-        self.single_tokens_used = self.num_tokens_from_messages(messages)
+        self.single_tokens_used = self.num_tokens_from_messages(messages + [{"role": "assistant", "content": answer}])
         self.total_tokens_used += self.single_tokens_used
         return answer
 
