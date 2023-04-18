@@ -16,6 +16,11 @@ from cmd2 import argparse_custom, with_argparser, Settable
 
 import openai
 
+class Context:
+    NONE = "none"
+    REQUEST = "request"
+    FULL =  "full"
+
 class Config:
     sep = Markdown("---")
     baseDir = os.path.dirname(os.path.realpath(__file__))
@@ -38,7 +43,7 @@ class Config:
         self.prompt = c.get("prompt", [])
         self.stream = c.get("stream", False)
         self.stream_render = c.get("stream_render", False)
-        self.response = c.get("response", False)
+        self.context = c.get("context", Context.NONE)
         self.proxy = c.get("proxy", "")
         self.showtokens = c.get("showtokens", False)
 
@@ -73,13 +78,13 @@ class GptCli(cmd2.Cmd):
         if self.config.proxy:
             self.print("Proxy:", self.config.proxy)
             openai.proxy = self.config.proxy
-        self.print("Response in prompt:", self.config.response)
+        self.print("Context mode:", self.config.context)
         self.print("Stream mode:", self.config.stream)
         # Init settable
         # NOTE: proxy is not settable in runtime since openai use pre-configured session
         self.add_settable(Settable("api_key", str, "OPENAI_API_KEY", self.config, onchange_cb=self.openai_set))
         self.add_settable(Settable("api_base", str, "OPENAI_API_BASE", self.config, onchange_cb=self.openai_set))
-        self.add_settable(Settable("response", bool, "Attach response in prompt", self.config))
+        self.add_settable(Settable("context", str, "Session context mode", self.config, choices=[Context.NONE, Context.REQUEST, Context.FULL]))
         self.add_settable(Settable("stream", bool, "Enable stream mode", self.config))
         self.add_settable(Settable("stream_render", bool, "Render live markdown in stream mode", self.config))
         self.add_settable(Settable("model", str, "OPENAI model", self.config))
@@ -133,10 +138,12 @@ class GptCli(cmd2.Cmd):
     def messages(self):
         msgs = []
         msgs.extend(self.config.prompt)
-        if self.config.response:
+        if self.config.context == Context.FULL:
             msgs.extend(self.session)
-        else:
+        elif self.config.context == Context.REQUEST:
             msgs.extend([s for s in self.session if s["role"] != "assistant"])
+        else: # NO Context
+            msgs.append(self.session[-1])
         return msgs
 
     def load_session(self, file, mode="md", encoding=None, append=False):

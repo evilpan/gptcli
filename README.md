@@ -28,7 +28,8 @@ Sample `config.json`:
     "model": "gpt-3.5-turbo",   // GPT Model
     "stream": true,             // Stream mode
     "stream_render": false,     // Render live markdown in stream mode
-    "response": true,           // Attach response in prompt, consume more tokens to get better results
+    "context": "full",          // Session context mode, choices: "none", "request", "full"
+    "showtokens": false,        // Show used token after every question
     "proxy": "",                // Use http/https/socks4a/socks5 proxy for requests to api.openai.com
     "prompt": [                 // Customize your prompt
         { "role": "system", "content": "If your response contains code, show with syntax highlight, for example ```js\ncode\n```" }
@@ -43,7 +44,7 @@ Supported model:
 - [x] gpt-4-32k
 
 Console help (with tab-complete):
-```
+```sh
 $ ./gptcli.py
 gptcli> .help -v
 
@@ -58,6 +59,7 @@ gptcli commands (use '.help -v' for verbose/'.help <topic>' for details):
 .reset                Reset session, i.e. clear chat history
 .save                 Save current conversation to Markdown/JSON file
 .set                  Set a settable parameter or show current settings of parameters
+.tokens               Display total tokens used this session
 ```
 
 Run in Docker:
