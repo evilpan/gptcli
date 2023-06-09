@@ -37,8 +37,10 @@ class Config:
         with open(file, "r") as f:
             self.cfg = json.load(f)
         c = self.cfg
-        self.api_key = c.get("api_key", c.get("key", openai.api_key)) # compatible with history key
-        self.api_base = c.get("api_base", openai.api_base)
+        self.api_key = c.get("api_key") or openai.api_key
+        self.api_base = c.get("api_base") or openai.api_base
+        self.api_type = c.get("api_type") or openai.api_type
+        self.api_version = c.get("api_version") or openai.api_version
         self.model = c.get("model", "gpt-3.5-turbo")
         self.prompt = c.get("prompt", [])
         self.stream = c.get("stream", False)
@@ -61,6 +63,7 @@ class GptCli(cmd2.Cmd):
             shortcuts={},
         )
         self.aliases[".exit"] = ".quit"
+        self.aliases[".config"] = ".set"
         self.doc_header = "gptcli commands (use '.help -v' for verbose/'.help <topic>' for details):"
         self.hidden_commands = [
             "._relative_run_script", ".run_script", ".run_pyscript",
@@ -72,9 +75,11 @@ class GptCli(cmd2.Cmd):
         self.session = []
         # Init config
         self.config = Config(config)
-        openai.api_key = self.config.api_key
-        if self.config.api_base:
-            openai.api_base = self.config.api_base
+        for opt in ["key", "base", "type", "version"]:
+            opt = f"api_{opt}"
+            val = getattr(self.config, opt)
+            setattr(openai, opt, val)
+            self.print(f"openai.{opt}={val}")
         if self.config.proxy:
             self.print("Proxy:", self.config.proxy)
             openai.proxy = self.config.proxy
@@ -84,6 +89,8 @@ class GptCli(cmd2.Cmd):
         # NOTE: proxy is not settable in runtime since openai use pre-configured session
         self.add_settable(Settable("api_key", str, "OPENAI_API_KEY", self.config, onchange_cb=self.openai_set))
         self.add_settable(Settable("api_base", str, "OPENAI_API_BASE", self.config, onchange_cb=self.openai_set))
+        self.add_settable(Settable("api_type", str, "OPENAI_API_TYPE", self.config, onchange_cb=self.openai_set, choices=("open_ai", "azure", "azure_ad", "azuread")))
+        self.add_settable(Settable("api_version", str, "OPENAI_API_VERSION", self.config, onchange_cb=self.openai_set))
         self.add_settable(Settable("context", str, "Session context mode", self.config, choices=[Context.NONE, Context.REQUEST, Context.FULL]))
         self.add_settable(Settable("stream", bool, "Enable stream mode", self.config))
         self.add_settable(Settable("stream_render", bool, "Render live markdown in stream mode", self.config))

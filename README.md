@@ -21,21 +21,35 @@ options:
 ```
 
 Sample `config.json`:
-```js
+```json
 {
-    "key": "",                  // your api-key, will read from OPENAI_API_KEY envronment variable if empty
-    "api_base": "",             // your api_base, will read from OPENAI_API_BASE envronment variable if empty
-    "model": "gpt-3.5-turbo",   // GPT Model
-    "stream": true,             // Stream mode
-    "stream_render": false,     // Render live markdown in stream mode
-    "context": "full",          // Session context mode, choices: "none", "request", "full"
-    "showtokens": false,        // Show used token after every question
-    "proxy": "",                // Use http/https/socks4a/socks5 proxy for requests to api.openai.com
-    "prompt": [                 // Customize your prompt
+    "api_key": "sk-xxx",
+    "api_base": "https://chat.pppan.net/v1",
+    "api_type": "open_ai",
+    "api_version": null,
+    "model": "gpt-3.5-turbo",
+    "context": "full",
+    "stream": true,
+    "stream_render": true,
+    "showtokens": false,
+    "proxy": "socks5://localhost:1080",
+    "prompt": [
         { "role": "system", "content": "If your response contains code, show with syntax highlight, for example ```js\ncode\n```" }
     ]
 }
 ```
+
+- (required) api_key: OpenAI's api key. will read from OPENAI_API_KEY envronment variable if not set
+- (optional) api_base: OpenAI's api base url. Can set to a server reverse proxy, for example [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/chatgpt-quickstart) or [chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI). By default it's from OPENAI_API_BASE or just <https://api.openai.com/v1>;
+- (optional) api_type: OpenAI's api type, read from env OPENAI_API_TYPE by default;
+- (optional) api_version: OpenAI's api version, read from env OPENAI_API_VERSION by default;
+- (optional) model: OpenAI's chat model, by default it's `gpt-3.5-turbo`;
+- (optional) context: Chat session context, choices: "none", "request", "full";
+- (optional) stream: Output in stream mode;
+- (optional) stream_render: Render markdown in stream mode, you can disable it to avoid some UI bugs;
+- (optional) showtokens: Print used tokens after every chat;
+- (optional) proxy: Use http/https/socks4a/socks5 proxy for requests to `api_base`;
+- (optional) prompt: Customize your prompt. This will appear in every chat request;
 
 Supported model:
 

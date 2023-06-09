@@ -1,12 +1,14 @@
 {
-    "key": "",
-    "api_base": "",
+    "api_key": "sk-xxx",
+    "api_base": "https://chat.pppan.net/v1",
+    "api_type": "open_ai",
+    "api_version": null,
     "model": "gpt-3.5-turbo",
+    "context": "full",
     "stream": true,
     "stream_render": true,
-    "context": "full",
     "showtokens": false,
-    "proxy": "",
+    "proxy": "socks5://localhost:1080",
     "prompt": [
         { "role": "system", "content": "If your response contains code, show with syntax highlight, for example ```js\ncode\n```" }
     ]
