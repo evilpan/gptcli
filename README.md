@@ -44,7 +44,10 @@ Sample `config.json`:
 - (optional) api_type: OpenAI's api type, read from env OPENAI_API_TYPE by default;
 - (optional) api_version: OpenAI's api version, read from env OPENAI_API_VERSION by default;
 - (optional) model: OpenAI's chat model, by default it's `gpt-3.5-turbo`;
-- (optional) context: Chat session context, choices: "none", "request", "full";
+- (optional) context: Chat session context, choices are:
+  - none:    no context provided for every chat request, cost least tokens, but AI don't kown what you said before;
+  - request: only use previous user questions as context;
+  - full:    use both previous questions and answers as context, would cost more tokens;
 - (optional) stream: Output in stream mode;
 - (optional) stream_render: Render markdown in stream mode, you can disable it to avoid some UI bugs;
 - (optional) showtokens: Print used tokens after every chat;

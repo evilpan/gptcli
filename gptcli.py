@@ -4,12 +4,15 @@ import os
 import json
 import inspect
 import argparse
+import datetime
+import requests
 from argparse import Namespace
 from typing import List
 
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.live import Live
+from rich.table import Table
 
 import cmd2
 from cmd2 import argparse_custom, with_argparser, Settable
@@ -298,9 +301,54 @@ class GptCli(cmd2.Cmd):
         "Load conversation from Markdown/JSON file"
         self.load_session(args.file, args.mode, args.encoding, args.append)
 
+    parser_tokens = argparse_custom.DEFAULT_ARGUMENT_PARSER()
+    parser_tokens.add_argument("-u", dest="days", type=int,
+                             help="print usage of last n days")
+    parser_tokens.add_argument("-b", dest="billing", action="store_true",
+                             help="print detail of the billing subscription")
+    @with_argparser(parser_tokens)
     def do_tokens(self, args: Namespace):
         "Display total tokens used this session"
-        self.print(f"Total tokens used this session: {self.total_tokens_used}")
+        if args.days is None and not args.billing:
+            self.print(f"Total tokens used this session: {self.total_tokens_used}")
+            return
+        headers = {"Authorization": f"Bearer {self.config.api_key}"}
+        proxies = {}
+        if self.config.proxy:
+            proxies["http"] = self.config.proxy
+            proxies["https"] = self.config.proxy
+        if args.days:
+            end_date = datetime.datetime.now()
+            start_date = end_date - datetime.timedelta(args.days)
+            url = f"{self.config.api_base}/dashboard/billing/usage"
+            params = {
+                "start_date": str(start_date.date()),
+                "end_date": str(end_date.date()),
+            }
+            resp = requests.get(url, params=params, headers=headers, proxies=proxies)
+            if resp.status_code != 200 or "json" not in resp.headers["content-type"]:
+                self.print("Failed to get usage:", resp.status_code, resp.text)
+                return
+            js = resp.json()
+            daily_costs = js.get("daily_costs")
+            if not daily_costs:
+                self.print("json error:", js)
+                return
+            table = Table()
+            for i, cost in enumerate(daily_costs):
+                line_items = cost.get("line_items", [])
+                if i == 0:
+                    table.add_column("time")
+                    for item in line_items:
+                        table.add_column(item["name"])
+                row = [datetime.datetime.fromtimestamp(cost["timestamp"])] + [item["cost"] for item in line_items]
+                table.add_row(*list(map(str, row)))
+            self.print(table)
+            self.print("total_usage", js.get("total_usage"))
+        elif args.billing:
+            url = f"{self.config.api_base}/dashboard/billing/subscription"
+            resp = requests.get(url, headers=headers, proxies=proxies)
+            self.console.print_json(resp.text)
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
