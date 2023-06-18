@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import enum
 import json
 import inspect
 import argparse
@@ -19,10 +20,10 @@ from cmd2 import argparse_custom, with_argparser, Settable
 
 import openai
 
-class Context:
-    NONE = "none"
-    REQUEST = "request"
-    FULL =  "full"
+class ContextLevel(enum.Enum):
+    NONE = 0
+    REQUEST = 1
+    FULL =  2
 
 class Config:
     sep = Markdown("---")
@@ -48,7 +49,7 @@ class Config:
         self.prompt = c.get("prompt", [])
         self.stream = c.get("stream", False)
         self.stream_render = c.get("stream_render", False)
-        self.context = c.get("context", Context.NONE)
+        self.context = ContextLevel(c.get("context", 0))
         self.proxy = c.get("proxy", "")
         self.showtokens = c.get("showtokens", False)
 
@@ -77,6 +78,7 @@ class GptCli(cmd2.Cmd):
         self.console = Console()
         self.session = []
         # Init config
+        self.print("Loading config from:", config)
         self.config = Config(config)
         for opt in ["key", "base", "type", "version"]:
             opt = f"api_{opt}"
@@ -86,7 +88,7 @@ class GptCli(cmd2.Cmd):
         if self.config.proxy:
             self.print("Proxy:", self.config.proxy)
             openai.proxy = self.config.proxy
-        self.print("Context mode:", self.config.context)
+        self.print("Context level:", self.config.context)
         self.print("Stream mode:", self.config.stream)
         # Init settable
         # NOTE: proxy is not settable in runtime since openai use pre-configured session
@@ -94,7 +96,7 @@ class GptCli(cmd2.Cmd):
         self.add_settable(Settable("api_base", str, "OPENAI_API_BASE", self.config, onchange_cb=self.openai_set))
         self.add_settable(Settable("api_type", str, "OPENAI_API_TYPE", self.config, onchange_cb=self.openai_set, choices=("open_ai", "azure", "azure_ad", "azuread")))
         self.add_settable(Settable("api_version", str, "OPENAI_API_VERSION", self.config, onchange_cb=self.openai_set))
-        self.add_settable(Settable("context", str, "Session context mode", self.config, choices=[Context.NONE, Context.REQUEST, Context.FULL]))
+        self.add_settable(Settable("context", lambda v: ContextLevel(int(v)), "Session context mode", self.config))
         self.add_settable(Settable("stream", bool, "Enable stream mode", self.config))
         self.add_settable(Settable("stream_render", bool, "Render live markdown in stream mode", self.config))
         self.add_settable(Settable("model", str, "OPENAI model", self.config))
@@ -148,9 +150,9 @@ class GptCli(cmd2.Cmd):
     def messages(self):
         msgs = []
         msgs.extend(self.config.prompt)
-        if self.config.context == Context.FULL:
+        if self.config.context == ContextLevel.FULL:
             msgs.extend(self.session)
-        elif self.config.context == Context.REQUEST:
+        elif self.config.context == ContextLevel.REQUEST:
             msgs.extend([s for s in self.session if s["role"] != "assistant"])
         else: # NO Context
             msgs.append(self.session[-1])
