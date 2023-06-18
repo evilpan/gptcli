@@ -4,7 +4,7 @@
     "api_type": "open_ai",
     "api_version": null,
     "model": "gpt-3.5-turbo",
-    "context": "full",
+    "context": 2,
     "stream": true,
     "stream_render": true,
     "showtokens": false,
