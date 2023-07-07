@@ -278,6 +278,38 @@ class GptCli(cmd2.Cmd):
         self.session.clear()
         self.print("session cleared.")
 
+    parser_prompt = argparse_custom.DEFAULT_ARGUMENT_PARSER()
+    parser_prompt.add_argument("-c", dest="clear", action="store_true", help="remove current prompt")
+    parser_prompt.add_argument("file", nargs="?", help="prompt file to load, can be plaintext or json format",
+                               completer=cmd2.Cmd.path_complete)
+    @with_argparser(parser_prompt)
+    def do_prompt(self, args: Namespace):
+        "Load different prompts"
+        if args.clear:
+            self.config.prompt.clear()
+            self.print("Prompt cleared.")
+        elif args.file:
+            prompt = []
+            if args.file.endswith(".json"):
+                self.print("Load prompt from json")
+                with open(args.file, "r") as f:
+                    data = json.load(f)
+                if isinstance(data, list):
+                    prompt.extend(data)
+                elif isinstance(data, dict):
+                    prompt.append(data)
+            else:
+                self.print("Load prompt from text")
+                with open(args.file, "r") as f:
+                    data = f.read().rstrip()
+                prompt.append(
+                    { "role": "system", "content": data }
+                )
+            self.print("Prompt loaded:", json.dumps(prompt, indent=2, ensure_ascii=False))
+            self.config.prompt = prompt
+        else:
+            self.print("Current prompt:", json.dumps(self.config.prompt, indent=2, ensure_ascii=False))
+
     parser_save = argparse_custom.DEFAULT_ARGUMENT_PARSER()
     parser_save.add_argument("-m", dest="mode", choices=["json", "md"],
                              default="md", help="save as json or markdown (default: md)")

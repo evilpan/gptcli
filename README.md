@@ -62,7 +62,6 @@ Supported model:
 
 Console help (with tab-complete):
 ```sh
-$ ./gptcli.py
 gptcli> .help -v
 
 gptcli commands (use '.help -v' for verbose/'.help <topic>' for details):
@@ -72,6 +71,7 @@ gptcli commands (use '.help -v' for verbose/'.help <topic>' for details):
 .load                 Load conversation from Markdown/JSON file
 .multiline            input multiple lines, end with ctrl-d(Linux/macOS) or ctrl-z(Windows). Cancel
                       with ctrl-c
+.prompt               Load different prompts
 .quit                 Exit this application
 .reset                Reset session, i.e. clear chat history
 .save                 Save current conversation to Markdown/JSON file
