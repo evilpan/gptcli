@@ -76,7 +76,7 @@ gptcli commands (use '.help -v' for verbose/'.help <topic>' for details):
 .reset                Reset session, i.e. clear chat history
 .save                 Save current conversation to Markdown/JSON file
 .set                  Set a settable parameter or show current settings of parameters
-.tokens               Display total tokens used this session
+.usage                Tokens usage of current session / last N days, or print detail billing info
 ```
 
 Run in Docker:
@@ -101,6 +101,7 @@ $ docker run --rm -it -v $PWD/config.json:/gptcli/config.json --network host gpt
 - [x] Proxy support (HTTP/HTTPS/SOCKS4A/SOCKS5)
 - [x] Multiline input support (via `.multiline` command)
 - [x] Save and load session from file (Markdown/JSON) (via `.save` and `.load` command)
+- [x] Print tokens usage in realtime, and tokens usage for last N days, and billing details
 - [ ] Integrate with `llama_index` to support chatting with documents
 
 # LINK

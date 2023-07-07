@@ -84,6 +84,8 @@ class GptCli(cmd2.Cmd):
             opt = f"api_{opt}"
             val = getattr(self.config, opt)
             setattr(openai, opt, val)
+            if opt == "api_key" and len(val) > 12:
+                val = val[:7] + "*" * 4 + val[-4:]
             self.print(f"openai.{opt}={val}")
         if self.config.proxy:
             self.print("Proxy:", self.config.proxy)
@@ -302,14 +304,14 @@ class GptCli(cmd2.Cmd):
         "Load conversation from Markdown/JSON file"
         self.load_session(args.file, args.mode, args.encoding, args.append)
 
-    parser_tokens = argparse_custom.DEFAULT_ARGUMENT_PARSER()
-    parser_tokens.add_argument("-u", dest="days", type=int,
+    parser_usage = argparse_custom.DEFAULT_ARGUMENT_PARSER()
+    parser_usage.add_argument("-d", dest="days", type=int,
                              help="print usage of last n days")
-    parser_tokens.add_argument("-b", dest="billing", action="store_true",
+    parser_usage.add_argument("-b", dest="billing", action="store_true",
                              help="print detail of the billing subscription")
-    @with_argparser(parser_tokens)
-    def do_tokens(self, args: Namespace):
-        "Display total tokens used this session"
+    @with_argparser(parser_usage)
+    def do_usage(self, args: Namespace):
+        "Tokens usage of current session / last N days, or print detail billing info"
         if args.days is None and not args.billing:
             self.print(f"Total tokens used this session: {self.total_tokens_used}")
             return
