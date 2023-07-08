@@ -66,6 +66,7 @@ class GptCli(cmd2.Cmd):
             allow_cli_args=False,
             allow_redirection=False,
             shortcuts={},
+            persistent_history_file=os.path.expanduser("~/.gptcli_history"),
         )
         self.aliases[".exit"] = ".quit"
         self.aliases[".config"] = ".set"
@@ -115,10 +116,30 @@ class GptCli(cmd2.Cmd):
         self.total_tokens_used  = 0
 
     def openai_set(self, param, old, new):
-        self.print(f"openai.{param} = {new}")
+        self.print(f"openai.{param} = {old} -> {new}")
         setattr(openai, param, new)
 
+    def onecmd_plus_hooks(self, line: str, *args, **kwargs) -> bool:
+        """
+        Dirty hack to use Cmd2 as chat console, and avoid statement parsing
+        for chat input which may result in `No closing quotation` error.
+        """
+        if line.startswith("."):
+            return super().onecmd_plus_hooks(line, *args, **kwargs)
+        self.handle_input(line)
+        return False
+
+    def default(self, statement: cmd2.Statement):
+        """
+        for user input that startswith "." and not a recognized command,
+        treat it as chat instead of print error message.
+        """
+        self.handle_input(statement.raw)
+
     def cmd_func(self, command: str):
+        """
+        Another hack to make command startswith "." and keep completer
+        """
         if command.startswith("."):
             command = command[1:]
             return super().cmd_func(command)
@@ -128,9 +149,6 @@ class GptCli(cmd2.Cmd):
 
     def get_all_commands(self) -> List[str]:
         return list(map(lambda c: f".{c}", super().get_all_commands()))
-
-    def default(self, statement: cmd2.Statement):
-        self.handle_input(statement.raw)
 
     def print(self, *msg, **kwargs):
         self.console.print(*msg, **kwargs)
