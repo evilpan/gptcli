@@ -25,8 +25,6 @@ Sample `config.json`:
 {
     "api_key": "sk-xxx",
     "api_base": "https://chat.pppan.net/v1",
-    "api_type": "open_ai",
-    "api_version": null,
     "model": "gpt-3.5-turbo",
     "context": 2,
     "stream": true,
@@ -43,7 +41,11 @@ Sample `config.json`:
 - (optional) api_base: OpenAI's api base url. Can set to a server reverse proxy, for example [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/chatgpt-quickstart) or [chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI). By default it's from OPENAI_API_BASE or just <https://api.openai.com/v1>;
 - (optional) api_type: OpenAI's api type, read from env OPENAI_API_TYPE by default;
 - (optional) api_version: OpenAI's api version, read from env OPENAI_API_VERSION by default;
-- (optional) model: OpenAI's chat model, by default it's `gpt-3.5-turbo`;
+- (optional) api_organization: OpenAI's organization info, read from env OPENAI_ORGANIZATION by default;
+- (optional) model: OpenAI's chat model, by default it's `gpt-3.5-turbo`; choices are:
+  - gpt-3.5-turbo
+  - gpt-4
+  - gpt-4-32k
 - (optional) context: Chat session context, choices are:
   - 0: no context provided for every chat request, cost least tokens, but AI don't kown what you said before;
   - 1: only use previous user questions as context;
@@ -53,12 +55,6 @@ Sample `config.json`:
 - (optional) showtokens: Print used tokens after every chat;
 - (optional) proxy: Use http/https/socks4a/socks5 proxy for requests to `api_base`;
 - (optional) prompt: Customize your prompt. This will appear in every chat request;
-
-Supported model:
-
-- [x] gpt-3.5-turbo
-- [x] gpt-4
-- [x] gpt-4-32k
 
 Console help (with tab-complete):
 ```sh

@@ -41,11 +41,12 @@ class Config:
     def load(self, file):
         with open(file, "r") as f:
             self.cfg = json.load(f)
-        c = self.cfg
+        c: dict = self.cfg
         self.api_key = c.get("api_key") or openai.api_key
         self.api_base = c.get("api_base") or openai.api_base
         self.api_type = c.get("api_type") or openai.api_type
         self.api_version = c.get("api_version") or openai.api_version
+        self.api_organization = c.get("api_organization") or openai.organization
         self.model = c.get("model", "gpt-3.5-turbo")
         self.prompt = c.get("prompt", [])
         self.stream = c.get("stream", False)
@@ -82,7 +83,7 @@ class GptCli(cmd2.Cmd):
         # Init config
         self.print("Loading config from:", config)
         self.config = Config(config)
-        for opt in ["key", "base", "type", "version"]:
+        for opt in ["key", "base", "type", "version", "organization"]:
             opt = f"api_{opt}"
             val = getattr(self.config, opt)
             setattr(openai, opt, val)
@@ -101,6 +102,7 @@ class GptCli(cmd2.Cmd):
         self.add_settable(Settable("api_type", str, "OPENAI_API_TYPE", self.config, onchange_cb=self.openai_set,
                                    choices=("open_ai", "azure", "azure_ad", "azuread")))
         self.add_settable(Settable("api_version", str, "OPENAI_API_VERSION", self.config, onchange_cb=self.openai_set))
+        self.add_settable(Settable("api_organization", str, "OPENAI_API_ORGANIZATION", self.config, onchange_cb=self.openai_set))
         self.add_settable(Settable("context", lambda v: ContextLevel(int(v)), "Session context mode",
                                    self.config, completer=partial(cmd2.Cmd.basic_complete, match_against="012")))
         self.add_settable(Settable("stream", bool, "Enable stream mode", self.config))
@@ -116,7 +118,7 @@ class GptCli(cmd2.Cmd):
         self.total_tokens_used  = 0
 
     def openai_set(self, param, old, new):
-        self.print(f"openai.{param} = {old} -> {new}")
+        # self.print(f"openai.{param} = {old} -> {new}")
         setattr(openai, param, new)
 
     def onecmd_plus_hooks(self, line: str, *args, **kwargs) -> bool:
