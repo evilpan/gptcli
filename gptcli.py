@@ -7,6 +7,7 @@ import inspect
 import argparse
 import datetime
 import requests
+from functools import partial
 from argparse import Namespace
 from typing import List
 
@@ -84,8 +85,8 @@ class GptCli(cmd2.Cmd):
             opt = f"api_{opt}"
             val = getattr(self.config, opt)
             setattr(openai, opt, val)
-            if opt == "api_key" and len(val) > 12:
-                val = val[:7] + "*" * 4 + val[-4:]
+            if opt == "api_key" and len(val) > 7:
+                val = val[:7] + "*" * 5
             self.print(f"openai.{opt}={val}")
         if self.config.proxy:
             self.print("Proxy:", self.config.proxy)
@@ -96,9 +97,11 @@ class GptCli(cmd2.Cmd):
         # NOTE: proxy is not settable in runtime since openai use pre-configured session
         self.add_settable(Settable("api_key", str, "OPENAI_API_KEY", self.config, onchange_cb=self.openai_set))
         self.add_settable(Settable("api_base", str, "OPENAI_API_BASE", self.config, onchange_cb=self.openai_set))
-        self.add_settable(Settable("api_type", str, "OPENAI_API_TYPE", self.config, onchange_cb=self.openai_set, choices=("open_ai", "azure", "azure_ad", "azuread")))
+        self.add_settable(Settable("api_type", str, "OPENAI_API_TYPE", self.config, onchange_cb=self.openai_set,
+                                   choices=("open_ai", "azure", "azure_ad", "azuread")))
         self.add_settable(Settable("api_version", str, "OPENAI_API_VERSION", self.config, onchange_cb=self.openai_set))
-        self.add_settable(Settable("context", lambda v: ContextLevel(int(v)), "Session context mode", self.config))
+        self.add_settable(Settable("context", lambda v: ContextLevel(int(v)), "Session context mode",
+                                   self.config, completer=partial(cmd2.Cmd.basic_complete, match_against="012")))
         self.add_settable(Settable("stream", bool, "Enable stream mode", self.config))
         self.add_settable(Settable("stream_render", bool, "Render live markdown in stream mode", self.config))
         self.add_settable(Settable("model", str, "OPENAI model", self.config))
