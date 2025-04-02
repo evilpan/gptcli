@@ -3,6 +3,7 @@
 import os
 import enum
 import json
+import httpx
 import inspect
 import argparse
 import datetime
@@ -43,10 +44,7 @@ class Config:
             self.cfg = json.load(f)
         c: dict = self.cfg
         self.api_key = c.get("api_key") or openai.api_key
-        self.api_base = c.get("api_base") or openai.api_base
-        self.api_type = c.get("api_type") or openai.api_type
-        self.api_version = c.get("api_version") or openai.api_version
-        self.api_organization = c.get("api_organization") or openai.organization
+        self.base_url = c.get("base_url") or openai.base_url
         self.model = c.get("model", "gpt-3.5-turbo")
         self.prompt = c.get("prompt", [])
         self.stream = c.get("stream", False)
@@ -57,6 +55,14 @@ class Config:
 
     def get(self, key, default=None):
         return self.cfg.get(key, default)
+    
+    def __str__(self):
+        mk = self.api_key[:7] + "*" * 5
+        s = f"api_key={mk}\n"
+        s += f"base_url={self.base_url}\n"
+        s += f"Context level: {self.context}\n"
+        s += f"Stream mode: {self.stream}"
+        return s
 
 
 class GptCli(cmd2.Cmd):
@@ -83,26 +89,11 @@ class GptCli(cmd2.Cmd):
         # Init config
         self.print("Loading config from:", config)
         self.config = Config(config)
-        for opt in ["key", "base", "type", "version", "organization"]:
-            opt = f"api_{opt}"
-            val = getattr(self.config, opt)
-            setattr(openai, opt, val)
-            if opt == "api_key" and len(val) > 7:
-                val = val[:7] + "*" * 5
-            self.print(f"openai.{opt}={val}")
-        if self.config.proxy:
-            self.print("Proxy:", self.config.proxy)
-            openai.proxy = self.config.proxy
-        self.print("Context level:", self.config.context)
-        self.print("Stream mode:", self.config.stream)
+        self.print(self.config)
         # Init settable
-        # NOTE: proxy is not settable in runtime since openai use pre-configured session
-        self.add_settable(Settable("api_key", str, "OPENAI_API_KEY", self.config, onchange_cb=self.openai_set))
-        self.add_settable(Settable("api_base", str, "OPENAI_API_BASE", self.config, onchange_cb=self.openai_set))
-        self.add_settable(Settable("api_type", str, "OPENAI_API_TYPE", self.config, onchange_cb=self.openai_set,
-                                   choices=("open_ai", "azure", "azure_ad", "azuread")))
-        self.add_settable(Settable("api_version", str, "OPENAI_API_VERSION", self.config, onchange_cb=self.openai_set))
-        self.add_settable(Settable("api_organization", str, "OPENAI_API_ORGANIZATION", self.config, onchange_cb=self.openai_set))
+        self.add_settable(Settable("api_key", str, "OPENAI_API_KEY", self.config))
+        self.add_settable(Settable("base_url", str, "OPENAI_API_BASE", self.config))
+        self.add_settable(Settable("proxy", str, "Proxy to access API", self.config))
         self.add_settable(Settable("context", lambda v: ContextLevel(int(v)), "Session context mode",
                                    self.config, completer=partial(cmd2.Cmd.basic_complete, match_against="012")))
         self.add_settable(Settable("stream", bool, "Enable stream mode", self.config))
@@ -116,10 +107,6 @@ class GptCli(cmd2.Cmd):
 
         self.single_tokens_used = 0
         self.total_tokens_used  = 0
-
-    def openai_set(self, param, old, new):
-        # self.print(f"openai.{param} = {old} -> {new}")
-        setattr(openai, param, new)
 
     def onecmd_plus_hooks(self, line: str, *args, **kwargs) -> bool:
         """
@@ -217,9 +204,6 @@ class GptCli(cmd2.Cmd):
             encoding = tiktoken.encoding_for_model(model)
         except KeyError:
             encoding = tiktoken.get_encoding("cl100k_base")
-        if model not in ["gpt-3.5-turbo", "gpt-4", "gpt-4-32k"]:  # note: future models may deviate from this
-            self.print(f"""num_tokens_from_messages() is not presently implemented for model {model}.
-        See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens.""")
         num_tokens = 0
         for message in messages:
             num_tokens += 4  # every message follows <im_start>{role/name}\n{content}<im_end>\n
@@ -230,35 +214,52 @@ class GptCli(cmd2.Cmd):
         num_tokens += 2  # every reply is primed with <im_start>assistant
         return num_tokens
 
+    def get_client(self) -> openai.OpenAI:
+        if self.config.proxy:
+            http_client = httpx.Client(proxies={
+                "http://": self.config.proxy,
+                "https://": self.config.proxy
+            })
+        else:
+            http_client = None
+        client = openai.OpenAI(
+            api_key=self.config.api_key,
+            base_url=self.config.base_url,
+            http_client=http_client,
+            )
+        return client
+
     def query_openai(self, messages) -> str:
         try:
-            response = openai.ChatCompletion.create(
+            client = self.get_client()
+            response = client.chat.completions.create(
                 model=self.config.model,
                 messages=messages
             )
-            content = response["choices"][0]["message"]["content"]
+            content = response.choices[0].message.content
             self.print(Markdown(content), Config.sep)
 
-            self.single_tokens_used = response["usage"]["total_tokens"]
+            self.single_tokens_used = response.usage.total_tokens
             self.total_tokens_used += self.single_tokens_used
             return content
-        except openai.error.OpenAIError as e:
+        except openai.OpenAIError as e:
             self.print("OpenAIError:", e)
         return ""
 
     def query_openai_stream(self, messages) -> str:
         answer = ""
         try:
-            response = openai.ChatCompletion.create(
+            client = self.get_client()
+            stream = client.chat.completions.create(
                 model=self.config.model,
                 messages=messages,
-                stream=True)
+                stream=True,
+            )
             with Live(auto_refresh=False, vertical_overflow="visible") as lv:
-                for part in response:
-                    finish_reason = part["choices"][0]["finish_reason"]
-                    if "content" in part["choices"][0]["delta"]:
-                        content = part["choices"][0]["delta"]["content"]
-                        answer += content
+                for chunk in stream:
+                    finish_reason = chunk.choices[0].finish_reason
+                    if chunk.choices[0].delta.content:
+                        answer += chunk.choices[0].delta.content
                         if self.config.stream_render:
                             lv.update(Markdown(answer), refresh=True)
                         else:
@@ -269,7 +270,7 @@ class GptCli(cmd2.Cmd):
 
         except KeyboardInterrupt:
             self.print("Canceled")
-        except openai.error.OpenAIError as e:
+        except openai.OpenAIError as e:
             self.print("OpenAIError:", e)
             answer = ""
         self.print(Config.sep)
@@ -378,7 +379,7 @@ class GptCli(cmd2.Cmd):
         if args.days:
             end_date = datetime.datetime.now()
             start_date = end_date - datetime.timedelta(args.days)
-            url = f"{self.config.api_base}/dashboard/billing/usage"
+            url = f"{self.config.base_url}/dashboard/billing/usage"
             params = {
                 "start_date": str(start_date.date()),
                 "end_date": str(end_date.date()),
@@ -404,7 +405,7 @@ class GptCli(cmd2.Cmd):
             self.print(table)
             self.print("total_usage", js.get("total_usage"))
         elif args.billing:
-            url = f"{self.config.api_base}/dashboard/billing/subscription"
+            url = f"{self.config.base_url}/dashboard/billing/subscription"
             resp = requests.get(url, headers=headers, proxies=proxies)
             self.console.print_json(resp.text)
 

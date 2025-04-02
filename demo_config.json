@@ -1,8 +1,6 @@
 {
     "api_key": "sk-xxx",
-    "api_base": "https://chat.pppan.net/v1",
-    "api_type": "open_ai",
-    "api_version": null,
+    "base_url": "https://chat.pppan.net/v1",
     "model": "gpt-3.5-turbo",
     "context": 2,
     "stream": true,

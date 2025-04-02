@@ -1,4 +1,4 @@
-openai==0.28
+openai
 rich
 pyreadline3; platform_system == 'Windows'
 requests[socks]
