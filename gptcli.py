@@ -52,6 +52,7 @@ class Config:
         self.context = ContextLevel(c.get("context", 0))
         self.proxy = c.get("proxy", "")
         self.showtokens = c.get("showtokens", False)
+        self.model_choices = c.get("model_choices", [])
 
     def get(self, key, default=None):
         return self.cfg.get(key, default)
@@ -60,6 +61,9 @@ class Config:
         mk = self.api_key[:7] + "*" * 5
         s = f"api_key={mk}\n"
         s += f"base_url={self.base_url}\n"
+        s += f"model={self.model}\n"
+        if self.proxy:
+            s += f"proxy={self.proxy}\n"
         s += f"Context level: {self.context}\n"
         s += f"Stream mode: {self.stream}"
         return s
@@ -98,7 +102,7 @@ class GptCli(cmd2.Cmd):
                                    self.config, completer=partial(cmd2.Cmd.basic_complete, match_against="012")))
         self.add_settable(Settable("stream", bool, "Enable stream mode", self.config))
         self.add_settable(Settable("stream_render", bool, "Render live markdown in stream mode", self.config))
-        self.add_settable(Settable("model", str, "OPENAI model", self.config))
+        self.add_settable(Settable("model", str, "LLM model to use", self.config, choices=self.config.model_choices))
         self.add_settable(Settable("showtokens", bool, "Show tokens used with the output", self.config))
         # MISC
         with self.console.capture() as capture:

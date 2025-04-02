@@ -1,4 +1,4 @@
-Take chatGPT into command line.
+A simple chat client in single Python script
 
 [![stream](./stream.svg)][vid]
 
@@ -24,28 +24,30 @@ Sample `config.json`:
 ```json
 {
     "api_key": "sk-xxx",
-    "api_base": "https://chat.pppan.net/v1",
-    "model": "gpt-3.5-turbo",
+    "base_url": "https://chat.pppan.net/v1",
+    "model": "gemini-2.5-pro-exp-03-25",
     "context": 2,
     "stream": true,
     "stream_render": true,
     "showtokens": false,
     "proxy": "socks5://localhost:1080",
     "prompt": [
-        { "role": "system", "content": "If your response contains code, show with syntax highlight, for example ```js\ncode\n```" }
+        { "role": "system", "content": "You are a helpful assistant" }
+    ],
+    "model_choices": [
+      "gemini-2.5-pro-exp-03-25",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-lite",
+      "gemini-1.5-flash",
+      "gemini-1.5-flash-8b",
+      "gemini-1.5-pro"
     ]
 }
 ```
 
 - (required) api_key: OpenAI's api key. will read from OPENAI_API_KEY envronment variable if not set
-- (optional) api_base: OpenAI's api base url. Can set to a server reverse proxy, for example [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/chatgpt-quickstart) or [chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI). By default it's from OPENAI_API_BASE or just <https://api.openai.com/v1>;
-- (optional) api_type: OpenAI's api type, read from env OPENAI_API_TYPE by default;
-- (optional) api_version: OpenAI's api version, read from env OPENAI_API_VERSION by default;
-- (optional) api_organization: OpenAI's organization info, read from env OPENAI_ORGANIZATION by default;
-- (optional) model: OpenAI's chat model, by default it's `gpt-3.5-turbo`; choices are:
-  - gpt-3.5-turbo
-  - gpt-4
-  - gpt-4-32k
+- (optional) base_url: OpenAI's api base url. Can set to a server reverse proxy, for example [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/chatgpt-quickstart) or [chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI). By default it's from OPENAI_API_BASE or just <https://api.openai.com/v1>;
+- (optional) model: LLM chat model, by default it's `gpt-3.5-turbo`;
 - (optional) context: Chat session context, choices are:
   - 0: no context provided for every chat request, cost least tokens, but AI don't kown what you said before;
   - 1: only use previous user questions as context;
@@ -55,6 +57,7 @@ Sample `config.json`:
 - (optional) showtokens: Print used tokens after every chat;
 - (optional) proxy: Use http/https/socks4a/socks5 proxy for requests to `api_base`;
 - (optional) prompt: Customize your prompt. This will appear in every chat request;
+- (optional) model_choices: List of available models;
 
 Console help (with tab-complete):
 ```sh
@@ -91,14 +94,16 @@ $ docker run --rm -it -v $PWD/config.json:/gptcli/config.json --network host gpt
 # Feature
 
 - [x] Single Python script
+- [x] Support any OpenAI-Compatible API and models
 - [x] Session based
 - [x] Markdown support with code syntax highlight
 - [x] Stream output support
 - [x] Proxy support (HTTP/HTTPS/SOCKS4A/SOCKS5)
 - [x] Multiline input support (via `.multiline` command)
 - [x] Save and load session from file (Markdown/JSON) (via `.save` and `.load` command)
-- [x] Print tokens usage in realtime, and tokens usage for last N days, and billing details
-- [ ] Integrate with `llama_index` to support chatting with documents
+- [x] Print tokens usage in realtime, and tokens usage for last N days, and billing details (only works for OpenAI)
+
+> This script only support text models. If you want a more feature-rich client, for example, with functions like RAG, image generation, Function Calling, etc., please consult other projects, for instance, [aichat](https://github.com/sigoden/aichat).
 
 # LINK
 

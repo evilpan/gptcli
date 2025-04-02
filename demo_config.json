@@ -9,5 +9,18 @@
     "proxy": "socks5://localhost:1080",
     "prompt": [
         { "role": "system", "content": "If your response contains code, show with syntax highlight, for example ```js\ncode\n```" }
+    ],
+    "model_choices": [
+        "gpt-3.5-turbo",
+        "o3-mini",
+        "gpt-4",
+        "gpt-4-turbo",
+        "gpt-4o",
+        "gpt-4o-mini",
+        "gpt-4.5-preview",
+        "o1",
+        "o1-mini",
+        "o1-pro",
+        "chatgpt-4o-latest"
     ]
 }
