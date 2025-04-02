@@ -30,7 +30,7 @@ class ContextLevel(enum.Enum):
 class Config:
     sep = Markdown("---")
     baseDir = os.path.dirname(os.path.realpath(__file__))
-    default = os.path.join(baseDir, "config.json")
+    default = os.path.join(baseDir, "conf", "config.json")
     mdSep = '\n\n' + '-' * 10 + '\n'
     encodings = ["utf8", "gbk"]
 

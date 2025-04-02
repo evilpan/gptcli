@@ -6,8 +6,8 @@ A simple chat client in single Python script
 
 1. clone this repo
 2. pip3 install -U -r requirements.txt
-3. copy `demo_config.json` to `config.json`
-4. get your [OPENAI_API_KEY][key] and put it in `config.json`
+3. copy `demo_config.json` to `conf/config.json`
+4. get your [OPENAI_API_KEY][key] and put it in `conf/config.json`
 
 # Run
 
