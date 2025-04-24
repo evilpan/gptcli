@@ -220,10 +220,9 @@ class GptCli(cmd2.Cmd):
 
     def get_client(self) -> openai.OpenAI:
         if self.config.proxy:
-            http_client = httpx.Client(proxies={
-                "http://": self.config.proxy,
-                "https://": self.config.proxy
-            })
+            http_client = httpx.Client(
+                proxy=self.config.proxy
+            )
         else:
             http_client = None
         client = openai.OpenAI(
