@@ -258,7 +258,7 @@ class GptCli(cmd2.Cmd):
                 messages=messages,
                 stream=True,
             )
-            with Live(auto_refresh=False, vertical_overflow="visible") as lv:
+            with Live(auto_refresh=False) as lv:
                 for chunk in stream:
                     finish_reason = chunk.choices[0].finish_reason
                     if chunk.choices[0].delta.content:
