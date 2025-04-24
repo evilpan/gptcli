@@ -16,6 +16,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.live import Live
 from rich.table import Table
+from rich.spinner import Spinner
 
 import cmd2
 from cmd2 import argparse_custom, with_argparser, Settable
@@ -253,23 +254,23 @@ class GptCli(cmd2.Cmd):
         answer = ""
         try:
             client = self.get_client()
-            stream = client.chat.completions.create(
-                model=self.config.model,
-                messages=messages,
-                stream=True,
-            )
-            with Live(auto_refresh=False) as lv:
+            spinner = Spinner("dots", "Generating...")
+            with Live(spinner, refresh_per_second=10) as lv:
+                res = "no result"
+                stream = client.chat.completions.create(
+                    model=self.config.model,
+                    messages=messages,
+                    stream=True,
+                )
                 for chunk in stream:
                     finish_reason = chunk.choices[0].finish_reason
                     if chunk.choices[0].delta.content:
                         answer += chunk.choices[0].delta.content
-                        if self.config.stream_render:
-                            lv.update(Markdown(answer), refresh=True)
-                        else:
-                            lv.update(answer, refresh=True)
+                        res = Markdown(answer) if self.config.stream_render else answer
+                        lv.update(res, refresh=True)
                     elif finish_reason:
                         if answer:
-                            lv.update(Markdown(answer), refresh=True)
+                            lv.update(res, refresh=True)
 
         except KeyboardInterrupt:
             self.print("Canceled")
